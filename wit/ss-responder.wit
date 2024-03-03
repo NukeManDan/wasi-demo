@@ -1,0 +1,15 @@
+package ss:utils@0.1.0;
+
+interface base64 {
+    decode-str: func(b64-str: string) -> string;
+    encode-b64: func(bytes: list<u8> ) -> string;
+}
+
+world responder {
+    export base64;
+}
+
+world cli {
+    import base64;
+}
+

@@ -1,0 +1,23 @@
+[package]
+name = "ss-utils"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+base64 = "0.21.0"
+percent-encoding = "2.2.0"
+wit-bindgen = { version = "0.20.0", default-features = false, features = ["realloc"] }
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.component]
+package = "ss:responder"
+
+[package.metadata.component.target]
+path = "../wit/ss-responder.wit"
+world = "responder"
+
+[package.metadata.component.dependencies]

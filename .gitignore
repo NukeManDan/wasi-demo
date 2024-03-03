@@ -1,0 +1,4 @@
+**/target
+
+# Wasm Component bindings (unclear if should be committed)
+**/bindings.rs
