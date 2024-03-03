@@ -6,7 +6,7 @@
 (cd cli   && cargo component b -r)
 
 # Compose base components into higher-order packages 
-wasm-tools compose utils/target/wasm32-wasi/release/ss_utils.wasm -d cli/target/wasm32-wasi/release/ss-cli.wasm -o cli.wasm
+wasm-tools compose cli/target/wasm32-wasi/release/cli.wasm -d utils/target/wasm32-wasi/release/utils.wasm -o cli.wasm
 
 # # We need to transpile to extract/generate bindings for JS
 # # We do want to *ommit* anything related to syscalls, that wasi wants

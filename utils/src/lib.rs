@@ -45,6 +45,7 @@ impl Component {
             read::DecoderReader::new(&mut wrapped_reader, &engine::general_purpose::STANDARD);
         // handle errors as you normally would
         let mut result = Vec::new();
+        // FIXME: panic if passed anything but correct base64 data!
         decoder.read_to_end(&mut result).unwrap();
         result
         // let array_result = to_array32::<u8, 32>(result);

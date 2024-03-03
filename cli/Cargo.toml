@@ -1,5 +1,5 @@
 [package]
-name = "ss-cli"
+name = "cli"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,7 +7,7 @@ edition = "2021"
 package = "ss:responder"
 
 [package.metadata.component.target]
-path = "../wit/ss-responder.wit"
+path = "../wit/responder.wit"
 world = "cli"
 
 [dependencies]

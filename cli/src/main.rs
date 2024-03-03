@@ -6,7 +6,7 @@ use bindings::ss::utils::base64::*;
 /// A CLI for executing mathematical expressions
 /// using WebAssembly
 #[derive(Parser)]
-#[clap(name = "ss-responder", version = env!("CARGO_PKG_VERSION"))]
+#[clap(version = env!("CARGO_PKG_VERSION"))]
 struct Command {
     x: wit_bindgen::rt::string::String,
 }
@@ -14,7 +14,7 @@ struct Command {
 impl Command {
     fn run(self) {
         let res = decode_str(&self.x);
-        println!("{} -> {}", self.x, res);
+        println!("\"{}\" ->decode-> {}", self.x, res);
     }
 }
 

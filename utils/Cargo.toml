@@ -1,5 +1,5 @@
 [package]
-name = "ss-utils"
+name = "utils"
 version = "0.1.0"
 edition = "2021"
 
@@ -17,7 +17,7 @@ crate-type = ["cdylib"]
 package = "ss:responder"
 
 [package.metadata.component.target]
-path = "../wit/ss-responder.wit"
+path = "../wit/responder.wit"
 world = "responder"
 
 [package.metadata.component.dependencies]
