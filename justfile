@@ -38,8 +38,8 @@ fmt:
 clean:
     cargo multi clean
     # Wipeout wasm component bindings
-    rm -f **/**/bindings.rs
-    rm -f **/**/*.wasm
+    find . -name "bindings.rs" -type f -delete
+    find . -name "*.wasm" -type f -delete
 
 # Install/update required tools (node, jco, dprint, cargo-component, wasm-tools, wasmtime...)
 install:
