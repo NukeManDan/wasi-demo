@@ -12,7 +12,6 @@ world = "cli"
 
 [dependencies]
 anyhow = "1"
-clap = { version = "4.3.19", features = ["derive"] }
 bitflags = "2.4.2"
+clap = { version = "4.3.19", features = ["derive"] }
 wit-bindgen-rt = "0.21.0"
-

@@ -12,7 +12,7 @@ use crate::bindings::exports::ss::utils::base64::Guest;
 struct Component;
 
 /// The interface required for binding to WASI
-/// 
+///
 impl Guest for Component {
     /// decode a base64 string. This will percent decode the string
     /// then process it with a standard base64 alphabet set
