@@ -3,20 +3,19 @@
 
 alias b := build
 alias f := fmt
+alias c := clean
 alias i := install
 
 # Build all components (workspace unsupported at this time) 
 build:
 	#!/usr/bin/env bash
 	set -euxo pipefail
-	# Wipeout bindings
-	# rm -f **/**/bindings.rs
 
 	(cd utils && cargo component b -r)
 	(cd cli   && cargo component b -r)
 
 	# Compose base components into higher-order packages 
-	wasm-tools compose cli/target/wasm32-wasi/release/cli.wasm -d utils/target/wasm32-wasi/release/utils.wasm -o cli.wasm
+	wasm-tools compose cli/target/wasm32-wasi/release/ss-cli.wasm -d utils/target/wasm32-wasi/release/ss-utils.wasm -o ss-responder.wasm
 
 	# # We need to transpile to extract/generate bindings for JS
 	# # We do want to *ommit* anything related to syscalls, that wasi wants
@@ -33,6 +32,13 @@ fmt:
 	cargo multi fmt
 	dprint fmt
 	
+# Cleanup build artifacts 
+clean:
+	cargo multi clean
+	# Wipeout wasm component bindings
+	rm -f **/**/bindings.rs
+	rm -f **/**/*.wasm
+
 # Install/update required tools (node, jco, dprint, cargo-component, wasm-tools,...)  
 install:
 	#!/usr/bin/env bash
