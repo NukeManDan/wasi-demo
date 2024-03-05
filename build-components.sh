@@ -2,6 +2,12 @@
 
 # Following workflow in https://github.com/NukeManDan/component-docs/blob/main/component-model/examples/tutorial/README.md
 
+# TODO: make into justfile with commands
+
+# Wipeout bindings
+rm **/bindings.rs
+rm **/**/bindings.rs
+
 (cd utils && cargo component b -r)
 (cd cli   && cargo component b -r)
 

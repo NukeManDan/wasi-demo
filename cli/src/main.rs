@@ -8,7 +8,7 @@ use bindings::ss::utils::base64::*;
 #[derive(Parser)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
 struct Command {
-    x: wit_bindgen::rt::string::String,
+    x: String,
 }
 
 impl Command {
