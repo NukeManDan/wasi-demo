@@ -8,6 +8,7 @@ use std::str;
 // See the TLD for a script and instructions
 mod bindings;
 use crate::bindings::exports::ss::utils::base64::Guest;
+bindings::export!(Component with_types_in bindings);
 
 struct Component;
 
