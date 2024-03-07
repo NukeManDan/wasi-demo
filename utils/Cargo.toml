@@ -3,13 +3,11 @@ name = "utils"
 version = "0.1.0"
 edition = "2021"
 
-# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
-
 [dependencies]
 base64 = "0.21.5"
-bitflags = "2.4.2"
+bitflags = { workspace = true }
 percent-encoding = "2.3.0"
-wit-bindgen-rt = "0.21.0"
+wit-bindgen-rt = { workspace = true }
 
 [lib]
 crate-type = ["cdylib"]

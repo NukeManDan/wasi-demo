@@ -7,11 +7,18 @@ edition = "2021"
 package = "ss:responder"
 
 [package.metadata.component.target]
-path = "../wit/responder.wit"
+path = "wit/responder.wit"
 world = "cli"
+
+[workspace]
+members = ["utils"]
+
+[workspace.dependencies]
+bitflags = "2.4.2"
+wit-bindgen-rt = "0.21.0"
 
 [dependencies]
 anyhow = "1"
-bitflags = "2.4.2"
+bitflags = { workspace = true }
 clap = { version = "4.3.19", features = ["derive"] }
-wit-bindgen-rt = "0.21.0"
+wit-bindgen-rt = { workspace = true }
