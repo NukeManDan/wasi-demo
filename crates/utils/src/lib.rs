@@ -8,19 +8,19 @@ use std::str;
 // See the TLD for a script and instructions
 mod bindings;
 use crate::bindings::exports::ss::utils::base64::Guest;
-bindings::export!(Component with_types_in bindings);
+bindings::export!(Utilities with_types_in bindings);
 
-struct Component;
+struct Utilities;
 
 /// The interface required for binding to WASI
 ///
-impl Guest for Component {
+impl Guest for Utilities {
     /// decode a base64 string. This will percent decode the string
     /// then process it with a standard base64 alphabet set
     /// - parameter b64_str - is the reference str to be decoded
     /// - returns a utf8 string or an empty string
     fn decode_str(b64_str: String) -> String {
-        let bytes = Component::decode_b64(b64_str.as_str());
+        let bytes = Utilities::decode_b64(b64_str.as_str());
         let str = str::from_utf8(&bytes).unwrap_or("");
         str.to_string()
     }
@@ -39,7 +39,7 @@ impl Guest for Component {
     }
 }
 
-impl Component {
+impl Utilities {
     /// decode a base64 string. This will percent decode the string
     /// then process it with a standard base64 alphabet set
     /// - parameter b64_str - is the reference str to be decoded

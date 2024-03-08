@@ -1,15 +1,7 @@
-package ss:utils@0.1.0;
-
-interface base64 {
-    decode-str: func(b64-str: string) -> string;
-    encode-b64: func(bytes: list<u8>) -> string;
-}
+// Component auto-responder
+package ss:responder@0.1.0;
 
 world responder {
-    export base64;
+    include ss:utils/utils@0.1.0;
+    include ss:crypto/crypto@0.1.0;
 }
-
-world cli {
-    import base64;
-}
-

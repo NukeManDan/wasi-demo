@@ -8,10 +8,17 @@ package = "ss:responder"
 
 [package.metadata.component.target]
 path = "wit/responder.wit"
-world = "cli"
+
+[package.metadata.component.target.dependencies]
+"ss:utils" = { path = "wit/utils.wit" }
+"ss:crypto" = { path = "wit/crypto.wit" }
+
+# [package.metadata.component.dependencies]
+# "ss:utils" = { path = "target/wasm32-wasi/release/utils.wasm" }
+# "ss:crypto" = { path = "target/wasm32-wasi/release/ckcompat_dr_kdf.wasm" }
 
 [workspace]
-members = ["utils"]
+members = ["crates/*"]
 
 [workspace.dependencies]
 bitflags = "2.4.2"

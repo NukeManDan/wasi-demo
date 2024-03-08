@@ -13,10 +13,9 @@ wit-bindgen-rt = { workspace = true }
 crate-type = ["cdylib"]
 
 [package.metadata.component]
-package = "ss:responder"
+package = "ss:utils"
 
 [package.metadata.component.target]
-path = "../wit/responder.wit"
-world = "responder"
+path = "../../wit/utils.wit"
 
 [package.metadata.component.dependencies]

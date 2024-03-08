@@ -1,10 +1,9 @@
 use clap::Parser;
 
 mod bindings;
-use bindings::ss::utils::base64::*;
+// FIXME how to use bindings?
+use bindings::exports::ss::utils::base64::_export_decode_str_cabi;
 
-/// A CLI for executing mathematical expressions
-/// using WebAssembly
 #[derive(Parser)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
 struct Command {
