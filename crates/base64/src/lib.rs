@@ -25,10 +25,7 @@ impl Guest for Utilities {
         str.to_string()
     }
 
-    /// base64 encode an array of u8 using a standards alphabet set
-    /// and using padding
-    /// - parameter input the &[u8] to encode
-    /// - returns the base64 encoded String
+    /// base64 encode a UFT8 string
     fn encode_b64(bytes: Vec<u8>) -> String {
         let engine = engine::GeneralPurpose::new(&alphabet::STANDARD, engine::general_purpose::PAD);
 

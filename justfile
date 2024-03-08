@@ -62,4 +62,4 @@ install:
 
 # Basic sanity test(s)
 test:
-    wasmtime run --wasm component-model app.wasm SGVsbG8gYmFzZTY0IGZyZW56
+    wasmtime run --wasm component-model app.wasm "hello base64 frenz"
