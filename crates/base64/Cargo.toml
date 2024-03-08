@@ -1,5 +1,5 @@
 [package]
-name = "utils"
+name = "base64"
 version = "0.1.0"
 edition = "2021"
 
@@ -13,9 +13,10 @@ wit-bindgen-rt = { workspace = true }
 crate-type = ["cdylib"]
 
 [package.metadata.component]
-package = "ss:utils"
+package = "ss:responder"
 
 [package.metadata.component.target]
-path = "../../wit/utils.wit"
+path = "../../wit/base64.wit"
+# world = "base64"
 
 [package.metadata.component.dependencies]

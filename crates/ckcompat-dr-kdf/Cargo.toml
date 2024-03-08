@@ -14,9 +14,9 @@ wit-bindgen-rt = { workspace = true }
 crate-type = ["cdylib"]
 
 [package.metadata.component]
-package = "ss:crypto"
+package = "ss:responder"
 
 [package.metadata.component.target]
-path = "../../wit/crypto.wit"
+path = "../../wit/ckcompat-dr-kdf.wit"
 
 [package.metadata.component.dependencies]

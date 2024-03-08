@@ -58,6 +58,16 @@ checksum = "5ad32ce52e4161730f7098c077cd2ed6229b5804ccf99e5366be1ab72a98b4e1"
 
 [[package]]
 name = "base64"
+version = "0.1.0"
+dependencies = [
+ "base64 0.21.7",
+ "bitflags",
+ "percent-encoding",
+ "wit-bindgen-rt",
+]
+
+[[package]]
+name = "base64"
 version = "0.21.7"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "9d297deb1925b89f2ccc13d7635fa0714f12c87adce1c75356b39ca9b7178567"
@@ -133,16 +143,6 @@ name = "clap_lex"
 version = "0.7.0"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "98cc8fbded0c607b7ba9dd60cd98df59af97e84d24e49c8557331cfc26d301ce"
-
-[[package]]
-name = "cli"
-version = "0.1.0"
-dependencies = [
- "anyhow",
- "bitflags",
- "clap",
- "wit-bindgen-rt",
-]
 
 [[package]]
 name = "colorchoice"
@@ -245,6 +245,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "responder"
+version = "0.1.0"
+dependencies = [
+ "anyhow",
+ "bitflags",
+ "clap",
+ "wit-bindgen-rt",
+]
+
+[[package]]
 name = "sha2"
 version = "0.10.8"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -295,16 +305,6 @@ name = "utf8parse"
 version = "0.2.1"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "711b9620af191e0cdc7468a8d14e709c3dcdb115b36f838e601583af800a370a"
-
-[[package]]
-name = "utils"
-version = "0.1.0"
-dependencies = [
- "base64",
- "bitflags",
- "percent-encoding",
- "wit-bindgen-rt",
-]
 
 [[package]]
 name = "version_check"

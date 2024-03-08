@@ -1,7 +1,7 @@
-// Component auto-responder
+// Package SS Responder
 package ss:responder@0.1.0;
 
+// Component auto-responder
 world responder {
-    include ss:utils/utils@0.1.0;
-    include ss:crypto/crypto@0.1.0;
+    import base64;
 }

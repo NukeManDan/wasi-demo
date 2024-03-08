@@ -1,8 +1,7 @@
 use clap::Parser;
 
 mod bindings;
-// FIXME how to use bindings?
-use bindings::exports::ss::utils::base64::_export_decode_str_cabi;
+use bindings::ss::responder::base64::decode_str;
 
 #[derive(Parser)]
 #[clap(version = env!("CARGO_PKG_VERSION"))]
