@@ -1,5 +1,5 @@
 [package]
-name = "cli"
+name = "responder"
 version = "0.1.0"
 edition = "2021"
 
@@ -7,11 +7,11 @@ edition = "2021"
 package = "ss:responder"
 
 [package.metadata.component.target]
-path = "wit/responder.wit"
-world = "cli"
+path = "wit"
+world = "responder"
 
 [workspace]
-members = ["utils"]
+members = ["crates/*"]
 
 [workspace.dependencies]
 bitflags = "2.4.2"

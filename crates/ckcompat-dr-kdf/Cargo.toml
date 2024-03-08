@@ -1,12 +1,13 @@
 [package]
-name = "utils"
+name = "ckcompat-dr-kdf"
 version = "0.1.0"
 edition = "2021"
 
 [dependencies]
-base64 = "0.21.5"
 bitflags = { workspace = true }
-percent-encoding = "2.3.0"
+hkdf = "0.12.3"
+hmac = "0.12.1"
+sha2 = "0.10.6"
 wit-bindgen-rt = { workspace = true }
 
 [lib]
@@ -16,7 +17,6 @@ crate-type = ["cdylib"]
 package = "ss:responder"
 
 [package.metadata.component.target]
-path = "../wit/responder.wit"
-world = "responder"
+path = "../../wit/ckcompat-dr-kdf.wit"
 
 [package.metadata.component.dependencies]

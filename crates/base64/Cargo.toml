@@ -1,0 +1,22 @@
+[package]
+name = "base64"
+version = "0.1.0"
+edition = "2021"
+
+[dependencies]
+base64 = "0.21.5"
+bitflags = { workspace = true }
+percent-encoding = "2.3.0"
+wit-bindgen-rt = { workspace = true }
+
+[lib]
+crate-type = ["cdylib"]
+
+[package.metadata.component]
+package = "ss:responder"
+
+[package.metadata.component.target]
+path = "../../wit/base64.wit"
+# world = "base64"
+
+[package.metadata.component.dependencies]

@@ -3,7 +3,7 @@
 
 alias b := build
 alias f := fmt
-alias c := check
+alias c := clean
 alias i := install
 alias t := test
 
@@ -21,7 +21,9 @@ build:
     cargo component b -r --all
 
     # Compose base components into higher-order packages 
-    wasm-tools compose target/wasm32-wasi/release/cli.wasm -d target/wasm32-wasi/release/utils.wasm -o responder.wasm
+    # FIXME: remove need to rename the artifacts 🤦
+    ln -fs ckcompat_dr_kdf.wasm target/wasm32-wasi/release/ckcompat-dr-kdf.wasm
+    wasm-tools compose target/wasm32-wasi/release/responder.wasm -d target/wasm32-wasi/release/base64.wasm -d target/wasm32-wasi/release/ckcompat-dr-kdf.wasm -o target/wasm32-wasi/release/app.wasm
 
     # # We need to transpile to extract/generate bindings for JS
     # # We do want to *ommit* anything related to syscalls, that wasi wants
@@ -61,5 +63,5 @@ install:
     curl https://wasmtime.dev/install.sh -sSf | bash
 
 # Basic sanity test(s)
-test:
-    wasmtime run --wasm component-model responder.wasm SGVsbG8gYmFzZTY0IGZyZW56
+test: build
+    wasmtime run --wasm component-model target/wasm32-wasi/release/app.wasm "hello base64 frenz"
