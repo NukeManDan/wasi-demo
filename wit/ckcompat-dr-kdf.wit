@@ -7,7 +7,6 @@ interface ckcompact-dr-kdf {
 
 // Component crypto functions
 world ckcompact-dr-kdf-world {
-    import ckcompact-dr-kdf;
     export ckcompact-dr-kdf;
 }
 
