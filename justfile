@@ -21,7 +21,7 @@ build:
     cargo component b -r --all
 
     # Compose base components into higher-order packages 
-    wasm-tools compose target/wasm32-wasi/release/responder.wasm -d target/wasm32-wasi/release/base64.wasm -o app.wasm
+    wasm-tools compose target/wasm32-wasi/release/responder.wasm -d target/wasm32-wasi/release/base64.wasm -o target/wasm32-wasi/release/app.wasm
 
     # # We need to transpile to extract/generate bindings for JS
     # # We do want to *ommit* anything related to syscalls, that wasi wants
@@ -62,4 +62,4 @@ install:
 
 # Basic sanity test(s)
 test:
-    wasmtime run --wasm component-model app.wasm "hello base64 frenz"
+    wasmtime run --wasm component-model target/wasm32-wasi/release/app.wasm "hello base64 frenz"

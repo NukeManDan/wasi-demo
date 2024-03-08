@@ -15,12 +15,12 @@ impl Command {
         let dec = base64::decode_str(&enc);
         println!("\"{}\"\nbase64: {}\ndecode: {}", self.x, enc, dec);
 
-        // let input_chain_key = [
-        //     5u8, 219, 73, 34, 75, 198, 93, 31, 133, 177, 36, 11, 96, 135, 71, 44, 2, 28, 143, 15,
-        //     44, 81, 97, 52, 1, 54, 216, 115, 59, 166, 124, 65,
-        // ];
-        // let (rk, ck) = ckcompact_dr_kdf::kdf_ck(&input_chain_key);
-        // println!("rk: {:?}\nck: {:?}", rk, ck);
+        let input_chain_key = [
+            5u8, 219, 73, 34, 75, 198, 93, 31, 133, 177, 36, 11, 96, 135, 71, 44, 2, 28, 143, 15,
+            44, 81, 97, 52, 1, 54, 216, 115, 59, 166, 124, 65,
+        ];
+        let (rk, ck) = ckcompact_dr_kdf::kdf_ck(&input_chain_key);
+        println!("rk: {:?}\nck: {:?}", rk, ck);
     }
 }
 
