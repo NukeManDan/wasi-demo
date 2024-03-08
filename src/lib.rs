@@ -2,17 +2,17 @@
 // mod bindings;
 // use bindings::*;
 
-mod bindings;
-use bindings::exports::ss::responder::base64::Guest;
+// mod bindings;
+// use bindings::exports::ss::responder::base64::Guest;
 
-struct App;
+// struct App;
 
-impl Guest for App {
-    fn decode_str(b64_str: String) -> String {
-        bindings::ss::responder::base64::decode_str(b64_str.as_str())
-    }
+// impl Guest for App {
+//     fn decode_str(b64_str: String) -> String {
+//         bindings::ss::responder::base64::decode_str(b64_str.as_str())
+//     }
 
-    fn encode_b64(bytes: Vec<u8>) -> String {
-        bindings::ss::responder::base64::encode_b64(&bytes)
-    }
-}
+//     fn encode_b64(bytes: Vec<u8>) -> String {
+//         bindings::ss::responder::base64::encode_b64(&bytes)
+//     }
+// }
