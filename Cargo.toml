@@ -3,6 +3,9 @@ name = "responder"
 version = "0.1.0"
 edition = "2021"
 
+[lib]
+crate-type = ["cdylib"]
+
 [package.metadata.component]
 package = "ss:responder"
 
@@ -10,8 +13,13 @@ package = "ss:responder"
 path = "wit"
 world = "responder"
 
+# See https://github.com/bytecodealliance/cargo-component/issues/120
+# [package.metadata.component.target.dependencies]
+# "ss:base64" = { path = "target/wasm32-wasi/release/base64.wasm" }
+# "ss:ckcompat-dr-kdf" = { path = "target/wasm32-wasi/release/ckcompat-dr-kdf.wasm" }
+
 [workspace]
-members = ["crates/*"]
+members = ["cli", "crates/*"]
 
 [workspace.dependencies]
 bitflags = "2.4.2"

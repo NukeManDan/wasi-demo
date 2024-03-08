@@ -2,6 +2,7 @@
 # https://just.systems/man/en/chapter_42.html#safer-bash-shebang-recipes
 
 alias b := build
+alias w := web
 alias f := fmt
 alias c := clean
 alias i := install
@@ -23,17 +24,10 @@ build:
     # Compose base components into higher-order packages 
     # FIXME: remove need to rename the artifacts 🤦
     ln -fs ckcompat_dr_kdf.wasm target/wasm32-wasi/release/ckcompat-dr-kdf.wasm
-    wasm-tools compose target/wasm32-wasi/release/responder.wasm -d target/wasm32-wasi/release/base64.wasm -d target/wasm32-wasi/release/ckcompat-dr-kdf.wasm -o target/wasm32-wasi/release/app.wasm
-
-    # # We need to transpile to extract/generate bindings for JS
-    # # We do want to *ommit* anything related to syscalls, that wasi wants
-    # # Thus use the composed, not the command output.
-    # jco transpile ss-responder.wasm -o www
-    # # Serve required files (index.html & jco genereated files minimally)
-    # npx live-server www/
-
-    # # Run CLI example
-    # node www/cli-calc.js
+    # Compose CLI tool
+    wasm-tools compose target/wasm32-wasi/release/cli.wasm -d target/wasm32-wasi/release/base64.wasm -d target/wasm32-wasi/release/ckcompat-dr-kdf.wasm -o target/wasm32-wasi/release/responder-cli.wasm
+    # FIXME: remove need to chmod artifacts 🤦
+    chmod +x target/wasm32-wasi/release/responder-cli.wasm
 
 # Format .rs (with cargo) and .ts, .md,... (config in .dprint)
 fmt:
@@ -64,4 +58,18 @@ install:
 
 # Basic sanity test(s)
 test: build
-    wasmtime run --wasm component-model target/wasm32-wasi/release/app.wasm "hello base64 frenz"
+    wasmtime run --wasm component-model target/wasm32-wasi/release/responder-cli.wasm "hello base64 frenz"
+
+# Transpile for web
+web: build
+    # Compose JS target wasm
+    wasm-tools compose target/wasm32-wasi/release/responder.wasm -d target/wasm32-wasi/release/base64.wasm -d target/wasm32-wasi/release/ckcompat-dr-kdf.wasm -o target/wasm32-wasi/release/responder-js.wasm
+    # FIXME: remove need to chmod artifacts 🤦
+    chmod +x target/wasm32-wasi/release/responder-js.wasm
+
+    jco transpile target/wasm32-wasi/release/responder-js.wasm -o www
+    # Serve required files (index.html & jco genereated files minimally)
+    # npx live-server www/
+
+    # Run CLI example
+    node www/cli.js

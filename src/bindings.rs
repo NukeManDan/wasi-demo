@@ -179,6 +179,231 @@ pub mod ss {
         }
     }
 }
+pub mod exports {
+    pub mod ss {
+        pub mod responder {
+            #[allow(clippy::all)]
+            pub mod base64 {
+                #[used]
+                #[doc(hidden)]
+                #[cfg(target_arch = "wasm32")]
+                static __FORCE_SECTION_REF: fn() =
+                    super::super::super::super::__link_custom_section_describing_imports;
+                use super::super::super::super::_rt;
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_decode_str_cabi<T: Guest>(
+                    arg0: *mut u8,
+                    arg1: usize,
+                ) -> *mut u8 {
+                    let len0 = arg1;
+                    let bytes0 = _rt::Vec::from_raw_parts(arg0.cast(), len0, len0);
+                    let result1 = T::decode_str(_rt::string_lift(bytes0));
+                    let ptr2 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    let vec3 = (result1.into_bytes()).into_boxed_slice();
+                    let ptr3 = vec3.as_ptr().cast::<u8>();
+                    let len3 = vec3.len();
+                    ::core::mem::forget(vec3);
+                    *ptr2.add(4).cast::<usize>() = len3;
+                    *ptr2.add(0).cast::<*mut u8>() = ptr3.cast_mut();
+                    ptr2
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_decode_str<T: Guest>(arg0: *mut u8) {
+                    let l0 = *arg0.add(0).cast::<*mut u8>();
+                    let l1 = *arg0.add(4).cast::<usize>();
+                    _rt::cabi_dealloc(l0, l1, 1);
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_encode_b64_cabi<T: Guest>(
+                    arg0: *mut u8,
+                    arg1: usize,
+                ) -> *mut u8 {
+                    let len0 = arg1;
+                    let result1 = T::encode_b64(_rt::Vec::from_raw_parts(arg0.cast(), len0, len0));
+                    let ptr2 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    let vec3 = (result1.into_bytes()).into_boxed_slice();
+                    let ptr3 = vec3.as_ptr().cast::<u8>();
+                    let len3 = vec3.len();
+                    ::core::mem::forget(vec3);
+                    *ptr2.add(4).cast::<usize>() = len3;
+                    *ptr2.add(0).cast::<*mut u8>() = ptr3.cast_mut();
+                    ptr2
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_encode_b64<T: Guest>(arg0: *mut u8) {
+                    let l0 = *arg0.add(0).cast::<*mut u8>();
+                    let l1 = *arg0.add(4).cast::<usize>();
+                    _rt::cabi_dealloc(l0, l1, 1);
+                }
+                pub trait Guest {
+                    fn decode_str(b64_str: _rt::String) -> _rt::String;
+                    fn encode_b64(bytes: _rt::Vec<u8>) -> _rt::String;
+                }
+                #[doc(hidden)]
+
+                macro_rules! __export_ss_responder_base64_0_1_0_cabi{
+      ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
+
+        #[export_name = "ss:responder/base64@0.1.0#decode-str"]
+        unsafe extern "C" fn export_decode_str(arg0: *mut u8,arg1: usize,) -> *mut u8 {
+          $($path_to_types)*::_export_decode_str_cabi::<$ty>(arg0, arg1)
+        }
+        #[export_name = "cabi_post_ss:responder/base64@0.1.0#decode-str"]
+        unsafe extern "C" fn _post_return_decode_str(arg0: *mut u8,) {
+          $($path_to_types)*::__post_return_decode_str::<$ty>(arg0)
+        }
+        #[export_name = "ss:responder/base64@0.1.0#encode-b64"]
+        unsafe extern "C" fn export_encode_b64(arg0: *mut u8,arg1: usize,) -> *mut u8 {
+          $($path_to_types)*::_export_encode_b64_cabi::<$ty>(arg0, arg1)
+        }
+        #[export_name = "cabi_post_ss:responder/base64@0.1.0#encode-b64"]
+        unsafe extern "C" fn _post_return_encode_b64(arg0: *mut u8,) {
+          $($path_to_types)*::__post_return_encode_b64::<$ty>(arg0)
+        }
+      };);
+    }
+                #[doc(hidden)]
+                pub(crate) use __export_ss_responder_base64_0_1_0_cabi;
+                #[repr(align(4))]
+                struct _RetArea([::core::mem::MaybeUninit<u8>; 8]);
+                static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 8]);
+            }
+
+            #[allow(clippy::all)]
+            pub mod ckcompact_dr_kdf {
+                #[used]
+                #[doc(hidden)]
+                #[cfg(target_arch = "wasm32")]
+                static __FORCE_SECTION_REF: fn() =
+                    super::super::super::super::__link_custom_section_describing_imports;
+                use super::super::super::super::_rt;
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_kdf_rk_cabi<T: Guest>(
+                    arg0: *mut u8,
+                    arg1: usize,
+                    arg2: *mut u8,
+                    arg3: usize,
+                    arg4: *mut u8,
+                    arg5: usize,
+                ) -> *mut u8 {
+                    let len0 = arg1;
+                    let len1 = arg3;
+                    let len2 = arg5;
+                    let result3 = T::kdf_rk(
+                        _rt::Vec::from_raw_parts(arg0.cast(), len0, len0),
+                        _rt::Vec::from_raw_parts(arg2.cast(), len1, len1),
+                        _rt::Vec::from_raw_parts(arg4.cast(), len2, len2),
+                    );
+                    let ptr4 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    let (t5_0, t5_1) = result3;
+                    let vec6 = (t5_0).into_boxed_slice();
+                    let ptr6 = vec6.as_ptr().cast::<u8>();
+                    let len6 = vec6.len();
+                    ::core::mem::forget(vec6);
+                    *ptr4.add(4).cast::<usize>() = len6;
+                    *ptr4.add(0).cast::<*mut u8>() = ptr6.cast_mut();
+                    let vec7 = (t5_1).into_boxed_slice();
+                    let ptr7 = vec7.as_ptr().cast::<u8>();
+                    let len7 = vec7.len();
+                    ::core::mem::forget(vec7);
+                    *ptr4.add(12).cast::<usize>() = len7;
+                    *ptr4.add(8).cast::<*mut u8>() = ptr7.cast_mut();
+                    ptr4
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_kdf_rk<T: Guest>(arg0: *mut u8) {
+                    let l0 = *arg0.add(0).cast::<*mut u8>();
+                    let l1 = *arg0.add(4).cast::<usize>();
+                    let base2 = l0;
+                    let len2 = l1;
+                    _rt::cabi_dealloc(base2, len2 * 1, 1);
+                    let l3 = *arg0.add(8).cast::<*mut u8>();
+                    let l4 = *arg0.add(12).cast::<usize>();
+                    let base5 = l3;
+                    let len5 = l4;
+                    _rt::cabi_dealloc(base5, len5 * 1, 1);
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn _export_kdf_ck_cabi<T: Guest>(arg0: *mut u8, arg1: usize) -> *mut u8 {
+                    let len0 = arg1;
+                    let result1 = T::kdf_ck(_rt::Vec::from_raw_parts(arg0.cast(), len0, len0));
+                    let ptr2 = _RET_AREA.0.as_mut_ptr().cast::<u8>();
+                    let (t3_0, t3_1) = result1;
+                    let vec4 = (t3_0).into_boxed_slice();
+                    let ptr4 = vec4.as_ptr().cast::<u8>();
+                    let len4 = vec4.len();
+                    ::core::mem::forget(vec4);
+                    *ptr2.add(4).cast::<usize>() = len4;
+                    *ptr2.add(0).cast::<*mut u8>() = ptr4.cast_mut();
+                    let vec5 = (t3_1).into_boxed_slice();
+                    let ptr5 = vec5.as_ptr().cast::<u8>();
+                    let len5 = vec5.len();
+                    ::core::mem::forget(vec5);
+                    *ptr2.add(12).cast::<usize>() = len5;
+                    *ptr2.add(8).cast::<*mut u8>() = ptr5.cast_mut();
+                    ptr2
+                }
+                #[doc(hidden)]
+                #[allow(non_snake_case)]
+                pub unsafe fn __post_return_kdf_ck<T: Guest>(arg0: *mut u8) {
+                    let l0 = *arg0.add(0).cast::<*mut u8>();
+                    let l1 = *arg0.add(4).cast::<usize>();
+                    let base2 = l0;
+                    let len2 = l1;
+                    _rt::cabi_dealloc(base2, len2 * 1, 1);
+                    let l3 = *arg0.add(8).cast::<*mut u8>();
+                    let l4 = *arg0.add(12).cast::<usize>();
+                    let base5 = l3;
+                    let len5 = l4;
+                    _rt::cabi_dealloc(base5, len5 * 1, 1);
+                }
+                pub trait Guest {
+                    fn kdf_rk(
+                        rk: _rt::Vec<u8>,
+                        dh_out: _rt::Vec<u8>,
+                        info: _rt::Vec<u8>,
+                    ) -> (_rt::Vec<u8>, _rt::Vec<u8>);
+                    fn kdf_ck(ck: _rt::Vec<u8>) -> (_rt::Vec<u8>, _rt::Vec<u8>);
+                }
+                #[doc(hidden)]
+
+                macro_rules! __export_ss_responder_ckcompact_dr_kdf_0_1_0_cabi{
+  ($ty:ident with_types_in $($path_to_types:tt)*) => (const _: () = {
+
+    #[export_name = "ss:responder/ckcompact-dr-kdf@0.1.0#kdf-rk"]
+    unsafe extern "C" fn export_kdf_rk(arg0: *mut u8,arg1: usize,arg2: *mut u8,arg3: usize,arg4: *mut u8,arg5: usize,) -> *mut u8 {
+      $($path_to_types)*::_export_kdf_rk_cabi::<$ty>(arg0, arg1, arg2, arg3, arg4, arg5)
+    }
+    #[export_name = "cabi_post_ss:responder/ckcompact-dr-kdf@0.1.0#kdf-rk"]
+    unsafe extern "C" fn _post_return_kdf_rk(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_kdf_rk::<$ty>(arg0)
+    }
+    #[export_name = "ss:responder/ckcompact-dr-kdf@0.1.0#kdf-ck"]
+    unsafe extern "C" fn export_kdf_ck(arg0: *mut u8,arg1: usize,) -> *mut u8 {
+      $($path_to_types)*::_export_kdf_ck_cabi::<$ty>(arg0, arg1)
+    }
+    #[export_name = "cabi_post_ss:responder/ckcompact-dr-kdf@0.1.0#kdf-ck"]
+    unsafe extern "C" fn _post_return_kdf_ck(arg0: *mut u8,) {
+      $($path_to_types)*::__post_return_kdf_ck::<$ty>(arg0)
+    }
+  };);
+}
+                #[doc(hidden)]
+                pub(crate) use __export_ss_responder_ckcompact_dr_kdf_0_1_0_cabi;
+                #[repr(align(4))]
+                struct _RetArea([::core::mem::MaybeUninit<u8>; 16]);
+                static mut _RET_AREA: _RetArea = _RetArea([::core::mem::MaybeUninit::uninit(); 16]);
+            }
+        }
+    }
+}
 mod _rt {
     pub use alloc_crate::string::String;
     pub use alloc_crate::vec::Vec;
@@ -189,21 +414,63 @@ mod _rt {
             String::from_utf8_unchecked(bytes)
         }
     }
+    pub unsafe fn cabi_dealloc(ptr: *mut u8, size: usize, align: usize) {
+        if size == 0 {
+            return;
+        }
+        let layout = alloc::Layout::from_size_align_unchecked(size, align);
+        alloc::dealloc(ptr as *mut u8, layout);
+    }
     extern crate alloc as alloc_crate;
+    pub use alloc_crate::alloc;
 }
+
+/// Generates `#[no_mangle]` functions to export the specified type as the
+/// root implementation of all generated traits.
+///
+/// For more information see the documentation of `wit_bindgen::generate!`.
+///
+/// ```rust
+/// # macro_rules! export{ ($($t:tt)*) => (); }
+/// # trait Guest {}
+/// struct MyType;
+///
+/// impl Guest for MyType {
+///     // ...
+/// }
+///
+/// export!(MyType);
+/// ```
+#[allow(unused_macros)]
+#[doc(hidden)]
+
+macro_rules! __export_responder_impl {
+  ($ty:ident) => (self::export!($ty with_types_in self););
+  ($ty:ident with_types_in $($path_to_types_root:tt)*) => (
+  $($path_to_types_root)*::exports::ss::responder::base64::__export_ss_responder_base64_0_1_0_cabi!($ty with_types_in $($path_to_types_root)*::exports::ss::responder::base64);
+  $($path_to_types_root)*::exports::ss::responder::ckcompact_dr_kdf::__export_ss_responder_ckcompact_dr_kdf_0_1_0_cabi!($ty with_types_in $($path_to_types_root)*::exports::ss::responder::ckcompact_dr_kdf);
+  )
+}
+#[doc(inline)]
+pub(crate) use __export_responder_impl as export;
 
 #[cfg(target_arch = "wasm32")]
 #[link_section = "component-type:wit-bindgen:0.21.0:responder:encoded world"]
 #[doc(hidden)]
-pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 364] = *b"\
-\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xec\x01\x01A\x02\x01\
-A\x04\x01B\x05\x01@\x01\x07b64-strs\0s\x04\0\x0adecode-str\x01\0\x01p}\x01@\x01\x05\
+pub static __WIT_BINDGEN_COMPONENT_TYPE: [u8; 561] = *b"\
+\0asm\x0d\0\x01\0\0\x19\x16wit-component-encoding\x04\0\x07\xb1\x03\x01A\x02\x01\
+A\x08\x01B\x05\x01@\x01\x07b64-strs\0s\x04\0\x0adecode-str\x01\0\x01p}\x01@\x01\x05\
 bytes\x01\0s\x04\0\x0aencode-b64\x01\x02\x03\x01\x19ss:responder/base64@0.1.0\x05\
 \0\x01B\x06\x01p}\x01o\x02\0\0\x01@\x03\x02rk\0\x06dh-out\0\x04info\0\0\x01\x04\0\
 \x06kdf-rk\x01\x02\x01@\x01\x02ck\0\0\x01\x04\0\x06kdf-ck\x01\x03\x03\x01#ss:res\
-ponder/ckcompact-dr-kdf@0.1.0\x05\x01\x04\x01\x1css:responder/responder@0.1.0\x04\
-\0\x0b\x0f\x01\0\x09responder\x03\0\0\0G\x09producers\x01\x0cprocessed-by\x02\x0d\
-wit-component\x070.201.0\x10wit-bindgen-rust\x060.21.0";
+ponder/ckcompact-dr-kdf@0.1.0\x05\x01\x01B\x05\x01@\x01\x07b64-strs\0s\x04\0\x0a\
+decode-str\x01\0\x01p}\x01@\x01\x05bytes\x01\0s\x04\0\x0aencode-b64\x01\x02\x04\x01\
+\x19ss:responder/base64@0.1.0\x05\x02\x01B\x06\x01p}\x01o\x02\0\0\x01@\x03\x02rk\
+\0\x06dh-out\0\x04info\0\0\x01\x04\0\x06kdf-rk\x01\x02\x01@\x01\x02ck\0\0\x01\x04\
+\0\x06kdf-ck\x01\x03\x04\x01#ss:responder/ckcompact-dr-kdf@0.1.0\x05\x03\x04\x01\
+\x1css:responder/responder@0.1.0\x04\0\x0b\x0f\x01\0\x09responder\x03\0\0\0G\x09\
+producers\x01\x0cprocessed-by\x02\x0dwit-component\x070.201.0\x10wit-bindgen-rus\
+t\x060.21.0";
 
 #[inline(never)]
 #[doc(hidden)]
