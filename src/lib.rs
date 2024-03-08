@@ -1,6 +1,6 @@
 // // Dummy file, needed for generation of wasm from ../wit/responder.wit
 // mod bindings;
-// use bindings::*;
+// use bindings::ss::responder::base64::decode_str;
 
 // mod bindings;
 // use bindings::exports::ss::responder::base64::Guest;

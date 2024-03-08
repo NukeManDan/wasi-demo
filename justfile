@@ -63,12 +63,12 @@ test: build
 # Transpile for web
 web: build
     # Compose JS target wasm
-    # wasm-tools compose target/wasm32-wasi/release/responder.wasm -d target/wasm32-wasi/release/base64.wasm -d target/wasm32-wasi/release/ckcompat-dr-kdf.wasm -o target/wasm32-wasi/release/responder-js.wasm
+    wasm-tools compose target/wasm32-wasi/release/responder.wasm -d target/wasm32-wasi/release/base64.wasm -d target/wasm32-wasi/release/ckcompat-dr-kdf.wasm -o target/wasm32-wasi/release/composed.wasm
     # # FIXME: remove need to chmod artifacts 🤦
-    # chmod +x target/wasm32-wasi/release/responder-js.wasm
+    # chmod +x target/wasm32-wasi/release/composed.wasm
 
     # jco transpile target/wasm32-wasi/release/responder-js.wasm -o www
-    jco transpile target/wasm32-wasi/release/responder.wasm -o www
+    jco transpile target/wasm32-wasi/release/composed.wasm -o www
     # Serve required files (index.html & jco genereated files minimally)
     # npx live-server www/
 
