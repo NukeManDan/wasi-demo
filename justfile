@@ -62,6 +62,8 @@ test: build
 
 # Transpile for web
 web: build
+    # Generate wasm base to further compose
+    wasm-tools component wit wit/responder.wit -w > target/wasm32-wasi/release/responder.wasm
     # Compose JS target wasm
     wasm-tools compose target/wasm32-wasi/release/responder.wasm -d target/wasm32-wasi/release/base64.wasm -d target/wasm32-wasi/release/ckcompat-dr-kdf.wasm -o target/wasm32-wasi/release/composed.wasm
     # # FIXME: remove need to chmod artifacts 🤦

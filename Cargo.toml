@@ -30,3 +30,7 @@ anyhow = "1"
 bitflags = { workspace = true }
 clap = { version = "4.3.19", features = ["derive"] }
 wit-bindgen-rt = { workspace = true }
+
+# local
+# base64 = {path = "crates/base64"}
+# ckcompat-dr-kdf = {path = "crates/ckcompat-dr-kdf"}

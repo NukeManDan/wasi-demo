@@ -17,6 +17,7 @@ crate-type = ["cdylib"]
 package = "ss:responder"
 
 [package.metadata.component.target]
-path = "../../wit/ckcompat-dr-kdf.wit"
+path = "../../wit/responder.wit"
+world = "ckcompact-dr-kdf-world "
 
 [package.metadata.component.dependencies]

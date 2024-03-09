@@ -1,10 +1,32 @@
 // Package SS Responder
 package ss:responder@0.1.0;
 
+interface ckcompact-dr-kdf {
+    kdf-rk: func(rk: list<u8>, dh-out: list<u8>, info: list<u8>) -> tuple<list<u8>, list<u8>>;
+    kdf-ck: func(ck: list<u8>) -> tuple<list<u8>, list<u8>>;
+}
+
+// Component crypto functions
+world ckcompact-dr-kdf-world {
+    export ckcompact-dr-kdf;
+}
+
+interface base64 {
+    decode-str: func(b64-str: string) -> string;
+    encode-b64: func(bytes: list<u8>) -> string;
+}
+
+// Component base utility functions
+world base64-world {
+    export base64;
+}
+
 // Component auto-responder
 world responder {
     import base64;
     import ckcompact-dr-kdf;
-    include base64-world;
-    include ckcompact-dr-kdf-world;
+    export base64;
+    export ckcompact-dr-kdf;
+    // include base64-world;
+    // include ckcompact-dr-kdf-world;
 }

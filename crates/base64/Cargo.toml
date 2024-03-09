@@ -16,7 +16,7 @@ crate-type = ["cdylib"]
 package = "ss:responder"
 
 [package.metadata.component.target]
-path = "../../wit/base64.wit"
-# world = "base64"
+path = "../../wit/responder.wit"
+world = "base64-world"
 
 [package.metadata.component.dependencies]
