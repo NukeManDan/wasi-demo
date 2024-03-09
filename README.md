@@ -4,7 +4,7 @@
 
 ```sh
 just t # build & test composed wasm
-just w # transpile & test js
+just j # transpile & test js for both `node` and mvp Vite app
 ```
 
 ## TODO:

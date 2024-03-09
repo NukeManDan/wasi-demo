@@ -47,7 +47,6 @@ clean:
     find js -name "*.wasm" | xargs rm -vf
     rm -frv js/**/interfaces
     rm -rfv js/**/composed* -v
-    
 
 # Install/update required tools (node, jco, dprint, cargo-component, wasm-tools, wasmtime...)
 install:
