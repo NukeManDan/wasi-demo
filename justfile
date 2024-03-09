@@ -2,7 +2,7 @@
 # https://just.systems/man/en/chapter_42.html#safer-bash-shebang-recipes
 
 alias b := build
-alias w := web
+alias j := js
 alias f := fmt
 alias c := clean
 alias i := install
@@ -43,11 +43,11 @@ clean:
     # find . -name "*.wasm" -type f -delete
 
     # JS bindings
-    find www -name "*.wasm" -type f -delete
-    rm -fr www/interfaces
-    find www -name "*.d.ts" -type f -delete
-    rm -f www/composed.js
-    rm -f www/cli.js
+    # find js -name "*.wasm" -type f -delete -v
+    find js -name "*.wasm" | xargs rm -vf
+    rm -frv js/**/interfaces
+    rm -rfv js/**/composed* -v
+    
 
 # Install/update required tools (node, jco, dprint, cargo-component, wasm-tools, wasmtime...)
 install:
@@ -69,7 +69,7 @@ test: build
     wasmtime run --wasm component-model target/wasm32-wasi/release/responder-cli.wasm "hello base64 frenz"
 
 # Transpile for web
-web: build
+js: build
     # Generate wasm base to further compose
     # wasm-tools component wit wit/responder.wit -w > target/wasm32-wasi/release/responder.wasm
     # Compose JS target wasm
@@ -77,11 +77,15 @@ web: build
     # # FIXME: remove need to chmod artifacts 🤦
     # chmod +x target/wasm32-wasi/release/composed.wasm
 
-    # jco transpile target/wasm32-wasi/release/responder-js.wasm -o www
-    jco transpile target/wasm32-wasi/release/composed.wasm -o www
-    # Serve required files (index.html & jco genereated files minimally)
-    # npx live-server www/
+    # FIXME: remove need to build for every demo (somehow packages import f'ed) 🤦
+    jco transpile target/wasm32-wasi/release/composed.wasm -o js/node-cli
 
     # Run CLI example
-    tsc  www/cli.ts -m es6
-    node www/cli.js
+    tsc  js/node-cli/cli.ts -m es6
+    node js/node-cli/cli.js
+
+    ###################### 
+    # FIXME: remove need to build for every demo (somehow packages import f'ed) 🤦
+    jco transpile target/wasm32-wasi/release/composed.wasm -o js/vite/src
+    # Serve required files (index.html & jco genereated files minimally)
+    npm run open --prefix js/vite

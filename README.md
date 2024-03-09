@@ -18,6 +18,7 @@ just w # transpile & test js
     - Report need `wasm-tools component wit` to accept multiple wit files to look for interfaces etc.
   - Workspace issue? example calculator does NOT use one, and not top level crate.
 - [ ] How can you get _safe_ rust by calling into Wasm components? IIUC this is imposssible to guarantee, must be unstafe FFI (and why use have CABI bindings)... so need best practices. Maybe one could "decompile" rust from wasm?
+- [ ] Fix needing to have node_modules AND transpile artifacts in-place for js demo
 
 ## Notes:
 

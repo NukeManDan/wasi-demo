@@ -1,4 +1,5 @@
 // See the README for details on *generation* of the required import
+// import { base64 } from "../target/js/composed.js";
 import { base64 } from "./composed.js";
 
 let utf8Encode = new TextEncoder();

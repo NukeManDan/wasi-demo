@@ -1,20 +1,10 @@
 {
-  "json": {},
-  "typescript": {},
-  "markup": {},
-  "markdown": {
-    "ignoreDirective": "prettier-ignore",
-    "ignoreFileDirective": "prettier-ignore-file",
-    "ignoreStartDirective": "prettier-ignore-start",
-    "ignoreEndDirective": "prettier-ignore-end"
-  },
-  "toml": {
-  },
   "excludes": [
     "**/target",
     "**/node_modules",
-    "www/interfaces/",
-    "www/composed*"
+    "**/interfaces/*",
+    "js/**/composed*",
+    "js/**/*.d.ts"
   ],
   "plugins": [
     "https://plugins.dprint.dev/json-0.17.4.wasm",
