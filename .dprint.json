@@ -1,8 +1,7 @@
 {
-  "json": {
-  },
-  "typescript": {
-  },
+  "json": {},
+  "typescript": {},
+  "markup": {},
   "markdown": {
     "ignoreDirective": "prettier-ignore",
     "ignoreFileDirective": "prettier-ignore-file",
@@ -21,6 +20,7 @@
     "https://plugins.dprint.dev/json-0.17.4.wasm",
     "https://plugins.dprint.dev/markdown-0.16.1.wasm",
     "https://plugins.dprint.dev/toml-0.5.4.wasm",
-    "https://plugins.dprint.dev/typescript-0.89.3.wasm"
+    "https://plugins.dprint.dev/typescript-0.89.3.wasm",
+    "https://plugins.dprint.dev/g-plane/markup_fmt-v0.6.0.wasm"
   ]
 }
