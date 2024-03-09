@@ -40,7 +40,14 @@ clean:
     cargo clean
     # Wipeout wasm component bindings
     find . -name "bindings.rs" -type f -delete
-    find . -name "*.wasm" -type f -delete
+    # find . -name "*.wasm" -type f -delete
+
+    # JS bindings
+    find www -name "*.wasm" -type f -delete
+    rm -fr www/interfaces
+    find www -name "*.d.ts" -type f -delete
+    rm -f www/composed.js
+    rm -f www/cli.js
 
 # Install/update required tools (node, jco, dprint, cargo-component, wasm-tools, wasmtime...)
 install:
@@ -49,9 +56,10 @@ install:
     if ! $(echo "type node" | sh > /dev/null ); then
     	echo -e "\n Manually install node, suggested: https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating\n" & exit 1
     fi
-    npm install --global @bytecodealliance/jco
+    npm install -g @bytecodealliance/jco
+    npm install -g typescript typescript-language-server
     cargo install dprint
-    cargo install cargo-multi
+    # cargo install cargo-multi
     cargo install cargo-component
     cargo install wasm-tools
     curl https://wasmtime.dev/install.sh -sSf | bash
@@ -75,4 +83,5 @@ web: build
     # npx live-server www/
 
     # Run CLI example
+    tsc  www/cli.ts -m es6
     node www/cli.js
