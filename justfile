@@ -62,6 +62,8 @@ install:
     cargo install cargo-component
     cargo install wasm-tools
     curl https://wasmtime.dev/install.sh -sSf | bash
+    # install deps for web
+    npm i
 
 # Basic sanity test(s)
 test: build

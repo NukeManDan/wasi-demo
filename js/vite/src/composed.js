@@ -33,11 +33,44 @@ function getErrorPayload(e) {
   return e;
 }
 
+const handleTables = [];
+
 const hasOwnProperty = Object.prototype.hasOwnProperty;
 
 const instantiateCore = WebAssembly.instantiate;
 
-const resourceHandleSymbol = Symbol('resource');
+const T_FLAG = 1 << 30;
+
+function rscTableCreateOwn (table, rep) {
+  if (rep === 0) throw new Error('Invalid rep');
+  const free = table[0] & ~T_FLAG;
+  if (free === 0) {
+    table.push(0);
+    table.push(rep | T_FLAG);
+    return (table.length >> 1) - 1;
+  }
+  table[0] = table[free << 1];
+  table[free << 1] = 0;
+  table[(free << 1) + 1] = rep | T_FLAG;
+  return free;
+}
+
+function rscTableRemove (table, handle) {
+  const scope = table[handle << 1];
+  const val = table[(handle << 1) + 1];
+  const own = (val & T_FLAG) !== 0;
+  const rep = val & ~T_FLAG;
+  if (val === 0 || (scope & T_FLAG) !== 0) throw new Error('Invalid handle');
+  table[handle << 1] = table[0] | T_FLAG;
+  table[0] = handle | T_FLAG;
+  return { rep, scope, own };
+}
+
+const symbolCabiDispose = Symbol.for('cabiDispose');
+
+const symbolRscHandle = Symbol('handle');
+
+const symbolRscRep = Symbol.for('cabiRep');
 
 const symbolDispose = Symbol.dispose || Symbol.for('dispose');
 
@@ -82,8 +115,13 @@ function trampoline4() {
   if (!(ret instanceof OutputStream)) {
     throw new Error('Resource error: Not a valid "OutputStream" resource.');
   }
-  var handle0 = handleCnt1++;
-  handleTable1.set(handle0, { rep: ret, own: true });
+  var handle0 = ret[symbolRscHandle];
+  
+  if (!handle0) {
+    const rep = ret[symbolRscRep] || ++captureCnt1;
+    captureTable1.set(rep, ret);
+    handle0 = rscTableCreateOwn(handleTable1, rep);
+  }
   return handle0;
 }
 
@@ -116,8 +154,13 @@ function trampoline6() {
   if (!(ret instanceof InputStream)) {
     throw new Error('Resource error: Not a valid "InputStream" resource.');
   }
-  var handle0 = handleCnt2++;
-  handleTable2.set(handle0, { rep: ret, own: true });
+  var handle0 = ret[symbolRscHandle];
+  
+  if (!handle0) {
+    const rep = ret[symbolRscRep] || ++captureCnt2;
+    captureTable2.set(rep, ret);
+    handle0 = rscTableCreateOwn(handleTable2, rep);
+  }
   return handle0;
 }
 
@@ -126,11 +169,18 @@ function trampoline7() {
   if (!(ret instanceof OutputStream)) {
     throw new Error('Resource error: Not a valid "OutputStream" resource.');
   }
-  var handle0 = handleCnt1++;
-  handleTable1.set(handle0, { rep: ret, own: true });
+  var handle0 = ret[symbolRscHandle];
+  
+  if (!handle0) {
+    const rep = ret[symbolRscRep] || ++captureCnt1;
+    captureTable1.set(rep, ret);
+    handle0 = rscTableCreateOwn(handleTable1, rep);
+  }
   return handle0;
 }
 let exports2;
+let memory0;
+let realloc0;
 
 function trampoline8(arg0) {
   const ret = getDirectories();
@@ -143,8 +193,13 @@ function trampoline8(arg0) {
     if (!(tuple0_0 instanceof Descriptor)) {
       throw new Error('Resource error: Not a valid "Descriptor" resource.');
     }
-    var handle1 = handleCnt3++;
-    handleTable3.set(handle1, { rep: tuple0_0, own: true });
+    var handle1 = tuple0_0[symbolRscHandle];
+    
+    if (!handle1) {
+      const rep = tuple0_0[symbolRscRep] || ++captureCnt3;
+      captureTable3.set(rep, tuple0_0);
+      handle1 = rscTableCreateOwn(handleTable3, rep);
+    }
     dataView(memory0).setInt32(base + 0, handle1, true);
     var ptr2 = utf8Encode(tuple0_1, realloc0, memory0);
     var len2 = utf8EncodedLen;
@@ -154,183 +209,193 @@ function trampoline8(arg0) {
   dataView(memory0).setInt32(arg0 + 4, len3, true);
   dataView(memory0).setInt32(arg0 + 0, result3, true);
 }
-let memory0;
-let realloc0;
 
 function trampoline9(arg0, arg1, arg2) {
   var handle1 = arg0;
-  var rsc0 = handleTable3.get(handle1).rep;
+  var rep2 = handleTable3[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable3.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(Descriptor.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: Descriptor.prototype.writeViaStream.call(rsc0, BigInt.asUintN(64, arg1)) };
+    ret = { tag: 'ok', val: rsc0.writeViaStream(BigInt.asUintN(64, arg1))};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant4 = ret;
-  switch (variant4.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant5 = ret;
+  switch (variant5.tag) {
     case 'ok': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory0).setInt8(arg2 + 0, 0, true);
       if (!(e instanceof OutputStream)) {
         throw new Error('Resource error: Not a valid "OutputStream" resource.');
       }
-      var handle2 = handleCnt1++;
-      handleTable1.set(handle2, { rep: e, own: true });
-      dataView(memory0).setInt32(arg2 + 4, handle2, true);
+      var handle3 = e[symbolRscHandle];
+      
+      if (!handle3) {
+        const rep = e[symbolRscRep] || ++captureCnt1;
+        captureTable1.set(rep, e);
+        handle3 = rscTableCreateOwn(handleTable1, rep);
+      }
+      dataView(memory0).setInt32(arg2 + 4, handle3, true);
       break;
     }
     case 'err': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory0).setInt8(arg2 + 0, 1, true);
-      var val3 = e;
-      let enum3;
-      switch (val3) {
+      var val4 = e;
+      let enum4;
+      switch (val4) {
         case 'access': {
-          enum3 = 0;
+          enum4 = 0;
           break;
         }
         case 'would-block': {
-          enum3 = 1;
+          enum4 = 1;
           break;
         }
         case 'already': {
-          enum3 = 2;
+          enum4 = 2;
           break;
         }
         case 'bad-descriptor': {
-          enum3 = 3;
+          enum4 = 3;
           break;
         }
         case 'busy': {
-          enum3 = 4;
+          enum4 = 4;
           break;
         }
         case 'deadlock': {
-          enum3 = 5;
+          enum4 = 5;
           break;
         }
         case 'quota': {
-          enum3 = 6;
+          enum4 = 6;
           break;
         }
         case 'exist': {
-          enum3 = 7;
+          enum4 = 7;
           break;
         }
         case 'file-too-large': {
-          enum3 = 8;
+          enum4 = 8;
           break;
         }
         case 'illegal-byte-sequence': {
-          enum3 = 9;
+          enum4 = 9;
           break;
         }
         case 'in-progress': {
-          enum3 = 10;
+          enum4 = 10;
           break;
         }
         case 'interrupted': {
-          enum3 = 11;
+          enum4 = 11;
           break;
         }
         case 'invalid': {
-          enum3 = 12;
+          enum4 = 12;
           break;
         }
         case 'io': {
-          enum3 = 13;
+          enum4 = 13;
           break;
         }
         case 'is-directory': {
-          enum3 = 14;
+          enum4 = 14;
           break;
         }
         case 'loop': {
-          enum3 = 15;
+          enum4 = 15;
           break;
         }
         case 'too-many-links': {
-          enum3 = 16;
+          enum4 = 16;
           break;
         }
         case 'message-size': {
-          enum3 = 17;
+          enum4 = 17;
           break;
         }
         case 'name-too-long': {
-          enum3 = 18;
+          enum4 = 18;
           break;
         }
         case 'no-device': {
-          enum3 = 19;
+          enum4 = 19;
           break;
         }
         case 'no-entry': {
-          enum3 = 20;
+          enum4 = 20;
           break;
         }
         case 'no-lock': {
-          enum3 = 21;
+          enum4 = 21;
           break;
         }
         case 'insufficient-memory': {
-          enum3 = 22;
+          enum4 = 22;
           break;
         }
         case 'insufficient-space': {
-          enum3 = 23;
+          enum4 = 23;
           break;
         }
         case 'not-directory': {
-          enum3 = 24;
+          enum4 = 24;
           break;
         }
         case 'not-empty': {
-          enum3 = 25;
+          enum4 = 25;
           break;
         }
         case 'not-recoverable': {
-          enum3 = 26;
+          enum4 = 26;
           break;
         }
         case 'unsupported': {
-          enum3 = 27;
+          enum4 = 27;
           break;
         }
         case 'no-tty': {
-          enum3 = 28;
+          enum4 = 28;
           break;
         }
         case 'no-such-device': {
-          enum3 = 29;
+          enum4 = 29;
           break;
         }
         case 'overflow': {
-          enum3 = 30;
+          enum4 = 30;
           break;
         }
         case 'not-permitted': {
-          enum3 = 31;
+          enum4 = 31;
           break;
         }
         case 'pipe': {
-          enum3 = 32;
+          enum4 = 32;
           break;
         }
         case 'read-only': {
-          enum3 = 33;
+          enum4 = 33;
           break;
         }
         case 'invalid-seek': {
-          enum3 = 34;
+          enum4 = 34;
           break;
         }
         case 'text-file-busy': {
-          enum3 = 35;
+          enum4 = 35;
           break;
         }
         case 'cross-device': {
-          enum3 = 36;
+          enum4 = 36;
           break;
         }
         default: {
@@ -338,10 +403,10 @@ function trampoline9(arg0, arg1, arg2) {
             console.error(e);
           }
           
-          throw new TypeError(`"${val3}" is not one of the cases of error-code`);
+          throw new TypeError(`"${val4}" is not one of the cases of error-code`);
         }
       }
-      dataView(memory0).setInt8(arg2 + 4, enum3, true);
+      dataView(memory0).setInt8(arg2 + 4, enum4, true);
       break;
     }
     default: {
@@ -352,178 +417,190 @@ function trampoline9(arg0, arg1, arg2) {
 
 function trampoline10(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable3.get(handle1).rep;
+  var rep2 = handleTable3[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable3.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(Descriptor.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: Descriptor.prototype.appendViaStream.call(rsc0) };
+    ret = { tag: 'ok', val: rsc0.appendViaStream()};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant4 = ret;
-  switch (variant4.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant5 = ret;
+  switch (variant5.tag) {
     case 'ok': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory0).setInt8(arg1 + 0, 0, true);
       if (!(e instanceof OutputStream)) {
         throw new Error('Resource error: Not a valid "OutputStream" resource.');
       }
-      var handle2 = handleCnt1++;
-      handleTable1.set(handle2, { rep: e, own: true });
-      dataView(memory0).setInt32(arg1 + 4, handle2, true);
+      var handle3 = e[symbolRscHandle];
+      
+      if (!handle3) {
+        const rep = e[symbolRscRep] || ++captureCnt1;
+        captureTable1.set(rep, e);
+        handle3 = rscTableCreateOwn(handleTable1, rep);
+      }
+      dataView(memory0).setInt32(arg1 + 4, handle3, true);
       break;
     }
     case 'err': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory0).setInt8(arg1 + 0, 1, true);
-      var val3 = e;
-      let enum3;
-      switch (val3) {
+      var val4 = e;
+      let enum4;
+      switch (val4) {
         case 'access': {
-          enum3 = 0;
+          enum4 = 0;
           break;
         }
         case 'would-block': {
-          enum3 = 1;
+          enum4 = 1;
           break;
         }
         case 'already': {
-          enum3 = 2;
+          enum4 = 2;
           break;
         }
         case 'bad-descriptor': {
-          enum3 = 3;
+          enum4 = 3;
           break;
         }
         case 'busy': {
-          enum3 = 4;
+          enum4 = 4;
           break;
         }
         case 'deadlock': {
-          enum3 = 5;
+          enum4 = 5;
           break;
         }
         case 'quota': {
-          enum3 = 6;
+          enum4 = 6;
           break;
         }
         case 'exist': {
-          enum3 = 7;
+          enum4 = 7;
           break;
         }
         case 'file-too-large': {
-          enum3 = 8;
+          enum4 = 8;
           break;
         }
         case 'illegal-byte-sequence': {
-          enum3 = 9;
+          enum4 = 9;
           break;
         }
         case 'in-progress': {
-          enum3 = 10;
+          enum4 = 10;
           break;
         }
         case 'interrupted': {
-          enum3 = 11;
+          enum4 = 11;
           break;
         }
         case 'invalid': {
-          enum3 = 12;
+          enum4 = 12;
           break;
         }
         case 'io': {
-          enum3 = 13;
+          enum4 = 13;
           break;
         }
         case 'is-directory': {
-          enum3 = 14;
+          enum4 = 14;
           break;
         }
         case 'loop': {
-          enum3 = 15;
+          enum4 = 15;
           break;
         }
         case 'too-many-links': {
-          enum3 = 16;
+          enum4 = 16;
           break;
         }
         case 'message-size': {
-          enum3 = 17;
+          enum4 = 17;
           break;
         }
         case 'name-too-long': {
-          enum3 = 18;
+          enum4 = 18;
           break;
         }
         case 'no-device': {
-          enum3 = 19;
+          enum4 = 19;
           break;
         }
         case 'no-entry': {
-          enum3 = 20;
+          enum4 = 20;
           break;
         }
         case 'no-lock': {
-          enum3 = 21;
+          enum4 = 21;
           break;
         }
         case 'insufficient-memory': {
-          enum3 = 22;
+          enum4 = 22;
           break;
         }
         case 'insufficient-space': {
-          enum3 = 23;
+          enum4 = 23;
           break;
         }
         case 'not-directory': {
-          enum3 = 24;
+          enum4 = 24;
           break;
         }
         case 'not-empty': {
-          enum3 = 25;
+          enum4 = 25;
           break;
         }
         case 'not-recoverable': {
-          enum3 = 26;
+          enum4 = 26;
           break;
         }
         case 'unsupported': {
-          enum3 = 27;
+          enum4 = 27;
           break;
         }
         case 'no-tty': {
-          enum3 = 28;
+          enum4 = 28;
           break;
         }
         case 'no-such-device': {
-          enum3 = 29;
+          enum4 = 29;
           break;
         }
         case 'overflow': {
-          enum3 = 30;
+          enum4 = 30;
           break;
         }
         case 'not-permitted': {
-          enum3 = 31;
+          enum4 = 31;
           break;
         }
         case 'pipe': {
-          enum3 = 32;
+          enum4 = 32;
           break;
         }
         case 'read-only': {
-          enum3 = 33;
+          enum4 = 33;
           break;
         }
         case 'invalid-seek': {
-          enum3 = 34;
+          enum4 = 34;
           break;
         }
         case 'text-file-busy': {
-          enum3 = 35;
+          enum4 = 35;
           break;
         }
         case 'cross-device': {
-          enum3 = 36;
+          enum4 = 36;
           break;
         }
         default: {
@@ -531,10 +608,10 @@ function trampoline10(arg0, arg1) {
             console.error(e);
           }
           
-          throw new TypeError(`"${val3}" is not one of the cases of error-code`);
+          throw new TypeError(`"${val4}" is not one of the cases of error-code`);
         }
       }
-      dataView(memory0).setInt8(arg1 + 4, enum3, true);
+      dataView(memory0).setInt8(arg1 + 4, enum4, true);
       break;
     }
     default: {
@@ -545,216 +622,58 @@ function trampoline10(arg0, arg1) {
 
 function trampoline11(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable3.get(handle1).rep;
+  var rep2 = handleTable3[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable3.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(Descriptor.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: Descriptor.prototype.getType.call(rsc0) };
+    ret = { tag: 'ok', val: rsc0.getType()};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant4 = ret;
-  switch (variant4.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant5 = ret;
+  switch (variant5.tag) {
     case 'ok': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory0).setInt8(arg1 + 0, 0, true);
-      var val2 = e;
-      let enum2;
-      switch (val2) {
-        case 'unknown': {
-          enum2 = 0;
-          break;
-        }
-        case 'block-device': {
-          enum2 = 1;
-          break;
-        }
-        case 'character-device': {
-          enum2 = 2;
-          break;
-        }
-        case 'directory': {
-          enum2 = 3;
-          break;
-        }
-        case 'fifo': {
-          enum2 = 4;
-          break;
-        }
-        case 'symbolic-link': {
-          enum2 = 5;
-          break;
-        }
-        case 'regular-file': {
-          enum2 = 6;
-          break;
-        }
-        case 'socket': {
-          enum2 = 7;
-          break;
-        }
-        default: {
-          if ((e) instanceof Error) {
-            console.error(e);
-          }
-          
-          throw new TypeError(`"${val2}" is not one of the cases of descriptor-type`);
-        }
-      }
-      dataView(memory0).setInt8(arg1 + 1, enum2, true);
-      break;
-    }
-    case 'err': {
-      const e = variant4.val;
-      dataView(memory0).setInt8(arg1 + 0, 1, true);
       var val3 = e;
       let enum3;
       switch (val3) {
-        case 'access': {
+        case 'unknown': {
           enum3 = 0;
           break;
         }
-        case 'would-block': {
+        case 'block-device': {
           enum3 = 1;
           break;
         }
-        case 'already': {
+        case 'character-device': {
           enum3 = 2;
           break;
         }
-        case 'bad-descriptor': {
+        case 'directory': {
           enum3 = 3;
           break;
         }
-        case 'busy': {
+        case 'fifo': {
           enum3 = 4;
           break;
         }
-        case 'deadlock': {
+        case 'symbolic-link': {
           enum3 = 5;
           break;
         }
-        case 'quota': {
+        case 'regular-file': {
           enum3 = 6;
           break;
         }
-        case 'exist': {
+        case 'socket': {
           enum3 = 7;
-          break;
-        }
-        case 'file-too-large': {
-          enum3 = 8;
-          break;
-        }
-        case 'illegal-byte-sequence': {
-          enum3 = 9;
-          break;
-        }
-        case 'in-progress': {
-          enum3 = 10;
-          break;
-        }
-        case 'interrupted': {
-          enum3 = 11;
-          break;
-        }
-        case 'invalid': {
-          enum3 = 12;
-          break;
-        }
-        case 'io': {
-          enum3 = 13;
-          break;
-        }
-        case 'is-directory': {
-          enum3 = 14;
-          break;
-        }
-        case 'loop': {
-          enum3 = 15;
-          break;
-        }
-        case 'too-many-links': {
-          enum3 = 16;
-          break;
-        }
-        case 'message-size': {
-          enum3 = 17;
-          break;
-        }
-        case 'name-too-long': {
-          enum3 = 18;
-          break;
-        }
-        case 'no-device': {
-          enum3 = 19;
-          break;
-        }
-        case 'no-entry': {
-          enum3 = 20;
-          break;
-        }
-        case 'no-lock': {
-          enum3 = 21;
-          break;
-        }
-        case 'insufficient-memory': {
-          enum3 = 22;
-          break;
-        }
-        case 'insufficient-space': {
-          enum3 = 23;
-          break;
-        }
-        case 'not-directory': {
-          enum3 = 24;
-          break;
-        }
-        case 'not-empty': {
-          enum3 = 25;
-          break;
-        }
-        case 'not-recoverable': {
-          enum3 = 26;
-          break;
-        }
-        case 'unsupported': {
-          enum3 = 27;
-          break;
-        }
-        case 'no-tty': {
-          enum3 = 28;
-          break;
-        }
-        case 'no-such-device': {
-          enum3 = 29;
-          break;
-        }
-        case 'overflow': {
-          enum3 = 30;
-          break;
-        }
-        case 'not-permitted': {
-          enum3 = 31;
-          break;
-        }
-        case 'pipe': {
-          enum3 = 32;
-          break;
-        }
-        case 'read-only': {
-          enum3 = 33;
-          break;
-        }
-        case 'invalid-seek': {
-          enum3 = 34;
-          break;
-        }
-        case 'text-file-busy': {
-          enum3 = 35;
-          break;
-        }
-        case 'cross-device': {
-          enum3 = 36;
           break;
         }
         default: {
@@ -762,10 +681,175 @@ function trampoline11(arg0, arg1) {
             console.error(e);
           }
           
-          throw new TypeError(`"${val3}" is not one of the cases of error-code`);
+          throw new TypeError(`"${val3}" is not one of the cases of descriptor-type`);
         }
       }
       dataView(memory0).setInt8(arg1 + 1, enum3, true);
+      break;
+    }
+    case 'err': {
+      const e = variant5.val;
+      dataView(memory0).setInt8(arg1 + 0, 1, true);
+      var val4 = e;
+      let enum4;
+      switch (val4) {
+        case 'access': {
+          enum4 = 0;
+          break;
+        }
+        case 'would-block': {
+          enum4 = 1;
+          break;
+        }
+        case 'already': {
+          enum4 = 2;
+          break;
+        }
+        case 'bad-descriptor': {
+          enum4 = 3;
+          break;
+        }
+        case 'busy': {
+          enum4 = 4;
+          break;
+        }
+        case 'deadlock': {
+          enum4 = 5;
+          break;
+        }
+        case 'quota': {
+          enum4 = 6;
+          break;
+        }
+        case 'exist': {
+          enum4 = 7;
+          break;
+        }
+        case 'file-too-large': {
+          enum4 = 8;
+          break;
+        }
+        case 'illegal-byte-sequence': {
+          enum4 = 9;
+          break;
+        }
+        case 'in-progress': {
+          enum4 = 10;
+          break;
+        }
+        case 'interrupted': {
+          enum4 = 11;
+          break;
+        }
+        case 'invalid': {
+          enum4 = 12;
+          break;
+        }
+        case 'io': {
+          enum4 = 13;
+          break;
+        }
+        case 'is-directory': {
+          enum4 = 14;
+          break;
+        }
+        case 'loop': {
+          enum4 = 15;
+          break;
+        }
+        case 'too-many-links': {
+          enum4 = 16;
+          break;
+        }
+        case 'message-size': {
+          enum4 = 17;
+          break;
+        }
+        case 'name-too-long': {
+          enum4 = 18;
+          break;
+        }
+        case 'no-device': {
+          enum4 = 19;
+          break;
+        }
+        case 'no-entry': {
+          enum4 = 20;
+          break;
+        }
+        case 'no-lock': {
+          enum4 = 21;
+          break;
+        }
+        case 'insufficient-memory': {
+          enum4 = 22;
+          break;
+        }
+        case 'insufficient-space': {
+          enum4 = 23;
+          break;
+        }
+        case 'not-directory': {
+          enum4 = 24;
+          break;
+        }
+        case 'not-empty': {
+          enum4 = 25;
+          break;
+        }
+        case 'not-recoverable': {
+          enum4 = 26;
+          break;
+        }
+        case 'unsupported': {
+          enum4 = 27;
+          break;
+        }
+        case 'no-tty': {
+          enum4 = 28;
+          break;
+        }
+        case 'no-such-device': {
+          enum4 = 29;
+          break;
+        }
+        case 'overflow': {
+          enum4 = 30;
+          break;
+        }
+        case 'not-permitted': {
+          enum4 = 31;
+          break;
+        }
+        case 'pipe': {
+          enum4 = 32;
+          break;
+        }
+        case 'read-only': {
+          enum4 = 33;
+          break;
+        }
+        case 'invalid-seek': {
+          enum4 = 34;
+          break;
+        }
+        case 'text-file-busy': {
+          enum4 = 35;
+          break;
+        }
+        case 'cross-device': {
+          enum4 = 36;
+          break;
+        }
+        default: {
+          if ((e) instanceof Error) {
+            console.error(e);
+          }
+          
+          throw new TypeError(`"${val4}" is not one of the cases of error-code`);
+        }
+      }
+      dataView(memory0).setInt8(arg1 + 1, enum4, true);
       break;
     }
     default: {
@@ -776,249 +860,256 @@ function trampoline11(arg0, arg1) {
 
 function trampoline12(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable3.get(handle1).rep;
+  var rep2 = handleTable3[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable3.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(Descriptor.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: Descriptor.prototype.stat.call(rsc0) };
+    ret = { tag: 'ok', val: rsc0.stat()};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant11 = ret;
-  switch (variant11.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant12 = ret;
+  switch (variant12.tag) {
     case 'ok': {
-      const e = variant11.val;
+      const e = variant12.val;
       dataView(memory0).setInt8(arg1 + 0, 0, true);
-      var {type: v2_0, linkCount: v2_1, size: v2_2, dataAccessTimestamp: v2_3, dataModificationTimestamp: v2_4, statusChangeTimestamp: v2_5 } = e;
-      var val3 = v2_0;
-      let enum3;
-      switch (val3) {
+      var {type: v3_0, linkCount: v3_1, size: v3_2, dataAccessTimestamp: v3_3, dataModificationTimestamp: v3_4, statusChangeTimestamp: v3_5 } = e;
+      var val4 = v3_0;
+      let enum4;
+      switch (val4) {
         case 'unknown': {
-          enum3 = 0;
+          enum4 = 0;
           break;
         }
         case 'block-device': {
-          enum3 = 1;
+          enum4 = 1;
           break;
         }
         case 'character-device': {
-          enum3 = 2;
+          enum4 = 2;
           break;
         }
         case 'directory': {
-          enum3 = 3;
+          enum4 = 3;
           break;
         }
         case 'fifo': {
-          enum3 = 4;
+          enum4 = 4;
           break;
         }
         case 'symbolic-link': {
-          enum3 = 5;
+          enum4 = 5;
           break;
         }
         case 'regular-file': {
-          enum3 = 6;
+          enum4 = 6;
           break;
         }
         case 'socket': {
-          enum3 = 7;
+          enum4 = 7;
           break;
         }
         default: {
-          if ((v2_0) instanceof Error) {
-            console.error(v2_0);
+          if ((v3_0) instanceof Error) {
+            console.error(v3_0);
           }
           
-          throw new TypeError(`"${val3}" is not one of the cases of descriptor-type`);
+          throw new TypeError(`"${val4}" is not one of the cases of descriptor-type`);
         }
       }
-      dataView(memory0).setInt8(arg1 + 8, enum3, true);
-      dataView(memory0).setBigInt64(arg1 + 16, toUint64(v2_1), true);
-      dataView(memory0).setBigInt64(arg1 + 24, toUint64(v2_2), true);
-      var variant5 = v2_3;
-      if (variant5 === null || variant5=== undefined) {
+      dataView(memory0).setInt8(arg1 + 8, enum4, true);
+      dataView(memory0).setBigInt64(arg1 + 16, toUint64(v3_1), true);
+      dataView(memory0).setBigInt64(arg1 + 24, toUint64(v3_2), true);
+      var variant6 = v3_3;
+      if (variant6 === null || variant6=== undefined) {
         dataView(memory0).setInt8(arg1 + 32, 0, true);
       } else {
-        const e = variant5;
+        const e = variant6;
         dataView(memory0).setInt8(arg1 + 32, 1, true);
-        var {seconds: v4_0, nanoseconds: v4_1 } = e;
-        dataView(memory0).setBigInt64(arg1 + 40, toUint64(v4_0), true);
-        dataView(memory0).setInt32(arg1 + 48, toUint32(v4_1), true);
+        var {seconds: v5_0, nanoseconds: v5_1 } = e;
+        dataView(memory0).setBigInt64(arg1 + 40, toUint64(v5_0), true);
+        dataView(memory0).setInt32(arg1 + 48, toUint32(v5_1), true);
       }
-      var variant7 = v2_4;
-      if (variant7 === null || variant7=== undefined) {
+      var variant8 = v3_4;
+      if (variant8 === null || variant8=== undefined) {
         dataView(memory0).setInt8(arg1 + 56, 0, true);
       } else {
-        const e = variant7;
+        const e = variant8;
         dataView(memory0).setInt8(arg1 + 56, 1, true);
-        var {seconds: v6_0, nanoseconds: v6_1 } = e;
-        dataView(memory0).setBigInt64(arg1 + 64, toUint64(v6_0), true);
-        dataView(memory0).setInt32(arg1 + 72, toUint32(v6_1), true);
+        var {seconds: v7_0, nanoseconds: v7_1 } = e;
+        dataView(memory0).setBigInt64(arg1 + 64, toUint64(v7_0), true);
+        dataView(memory0).setInt32(arg1 + 72, toUint32(v7_1), true);
       }
-      var variant9 = v2_5;
-      if (variant9 === null || variant9=== undefined) {
+      var variant10 = v3_5;
+      if (variant10 === null || variant10=== undefined) {
         dataView(memory0).setInt8(arg1 + 80, 0, true);
       } else {
-        const e = variant9;
+        const e = variant10;
         dataView(memory0).setInt8(arg1 + 80, 1, true);
-        var {seconds: v8_0, nanoseconds: v8_1 } = e;
-        dataView(memory0).setBigInt64(arg1 + 88, toUint64(v8_0), true);
-        dataView(memory0).setInt32(arg1 + 96, toUint32(v8_1), true);
+        var {seconds: v9_0, nanoseconds: v9_1 } = e;
+        dataView(memory0).setBigInt64(arg1 + 88, toUint64(v9_0), true);
+        dataView(memory0).setInt32(arg1 + 96, toUint32(v9_1), true);
       }
       break;
     }
     case 'err': {
-      const e = variant11.val;
+      const e = variant12.val;
       dataView(memory0).setInt8(arg1 + 0, 1, true);
-      var val10 = e;
-      let enum10;
-      switch (val10) {
+      var val11 = e;
+      let enum11;
+      switch (val11) {
         case 'access': {
-          enum10 = 0;
+          enum11 = 0;
           break;
         }
         case 'would-block': {
-          enum10 = 1;
+          enum11 = 1;
           break;
         }
         case 'already': {
-          enum10 = 2;
+          enum11 = 2;
           break;
         }
         case 'bad-descriptor': {
-          enum10 = 3;
+          enum11 = 3;
           break;
         }
         case 'busy': {
-          enum10 = 4;
+          enum11 = 4;
           break;
         }
         case 'deadlock': {
-          enum10 = 5;
+          enum11 = 5;
           break;
         }
         case 'quota': {
-          enum10 = 6;
+          enum11 = 6;
           break;
         }
         case 'exist': {
-          enum10 = 7;
+          enum11 = 7;
           break;
         }
         case 'file-too-large': {
-          enum10 = 8;
+          enum11 = 8;
           break;
         }
         case 'illegal-byte-sequence': {
-          enum10 = 9;
+          enum11 = 9;
           break;
         }
         case 'in-progress': {
-          enum10 = 10;
+          enum11 = 10;
           break;
         }
         case 'interrupted': {
-          enum10 = 11;
+          enum11 = 11;
           break;
         }
         case 'invalid': {
-          enum10 = 12;
+          enum11 = 12;
           break;
         }
         case 'io': {
-          enum10 = 13;
+          enum11 = 13;
           break;
         }
         case 'is-directory': {
-          enum10 = 14;
+          enum11 = 14;
           break;
         }
         case 'loop': {
-          enum10 = 15;
+          enum11 = 15;
           break;
         }
         case 'too-many-links': {
-          enum10 = 16;
+          enum11 = 16;
           break;
         }
         case 'message-size': {
-          enum10 = 17;
+          enum11 = 17;
           break;
         }
         case 'name-too-long': {
-          enum10 = 18;
+          enum11 = 18;
           break;
         }
         case 'no-device': {
-          enum10 = 19;
+          enum11 = 19;
           break;
         }
         case 'no-entry': {
-          enum10 = 20;
+          enum11 = 20;
           break;
         }
         case 'no-lock': {
-          enum10 = 21;
+          enum11 = 21;
           break;
         }
         case 'insufficient-memory': {
-          enum10 = 22;
+          enum11 = 22;
           break;
         }
         case 'insufficient-space': {
-          enum10 = 23;
+          enum11 = 23;
           break;
         }
         case 'not-directory': {
-          enum10 = 24;
+          enum11 = 24;
           break;
         }
         case 'not-empty': {
-          enum10 = 25;
+          enum11 = 25;
           break;
         }
         case 'not-recoverable': {
-          enum10 = 26;
+          enum11 = 26;
           break;
         }
         case 'unsupported': {
-          enum10 = 27;
+          enum11 = 27;
           break;
         }
         case 'no-tty': {
-          enum10 = 28;
+          enum11 = 28;
           break;
         }
         case 'no-such-device': {
-          enum10 = 29;
+          enum11 = 29;
           break;
         }
         case 'overflow': {
-          enum10 = 30;
+          enum11 = 30;
           break;
         }
         case 'not-permitted': {
-          enum10 = 31;
+          enum11 = 31;
           break;
         }
         case 'pipe': {
-          enum10 = 32;
+          enum11 = 32;
           break;
         }
         case 'read-only': {
-          enum10 = 33;
+          enum11 = 33;
           break;
         }
         case 'invalid-seek': {
-          enum10 = 34;
+          enum11 = 34;
           break;
         }
         case 'text-file-busy': {
-          enum10 = 35;
+          enum11 = 35;
           break;
         }
         case 'cross-device': {
-          enum10 = 36;
+          enum11 = 36;
           break;
         }
         default: {
@@ -1026,10 +1117,10 @@ function trampoline12(arg0, arg1) {
             console.error(e);
           }
           
-          throw new TypeError(`"${val10}" is not one of the cases of error-code`);
+          throw new TypeError(`"${val11}" is not one of the cases of error-code`);
         }
       }
-      dataView(memory0).setInt8(arg1 + 8, enum10, true);
+      dataView(memory0).setInt8(arg1 + 8, enum11, true);
       break;
     }
     default: {
@@ -1040,163 +1131,170 @@ function trampoline12(arg0, arg1) {
 
 function trampoline13(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable0.get(handle1).rep;
+  var rep2 = handleTable0[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable0.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(Error$1.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   const ret = filesystemErrorCode(rsc0);
-  var variant3 = ret;
-  if (variant3 === null || variant3=== undefined) {
+  rsc0[symbolRscHandle] = null;
+  var variant4 = ret;
+  if (variant4 === null || variant4=== undefined) {
     dataView(memory0).setInt8(arg1 + 0, 0, true);
   } else {
-    const e = variant3;
+    const e = variant4;
     dataView(memory0).setInt8(arg1 + 0, 1, true);
-    var val2 = e;
-    let enum2;
-    switch (val2) {
+    var val3 = e;
+    let enum3;
+    switch (val3) {
       case 'access': {
-        enum2 = 0;
+        enum3 = 0;
         break;
       }
       case 'would-block': {
-        enum2 = 1;
+        enum3 = 1;
         break;
       }
       case 'already': {
-        enum2 = 2;
+        enum3 = 2;
         break;
       }
       case 'bad-descriptor': {
-        enum2 = 3;
+        enum3 = 3;
         break;
       }
       case 'busy': {
-        enum2 = 4;
+        enum3 = 4;
         break;
       }
       case 'deadlock': {
-        enum2 = 5;
+        enum3 = 5;
         break;
       }
       case 'quota': {
-        enum2 = 6;
+        enum3 = 6;
         break;
       }
       case 'exist': {
-        enum2 = 7;
+        enum3 = 7;
         break;
       }
       case 'file-too-large': {
-        enum2 = 8;
+        enum3 = 8;
         break;
       }
       case 'illegal-byte-sequence': {
-        enum2 = 9;
+        enum3 = 9;
         break;
       }
       case 'in-progress': {
-        enum2 = 10;
+        enum3 = 10;
         break;
       }
       case 'interrupted': {
-        enum2 = 11;
+        enum3 = 11;
         break;
       }
       case 'invalid': {
-        enum2 = 12;
+        enum3 = 12;
         break;
       }
       case 'io': {
-        enum2 = 13;
+        enum3 = 13;
         break;
       }
       case 'is-directory': {
-        enum2 = 14;
+        enum3 = 14;
         break;
       }
       case 'loop': {
-        enum2 = 15;
+        enum3 = 15;
         break;
       }
       case 'too-many-links': {
-        enum2 = 16;
+        enum3 = 16;
         break;
       }
       case 'message-size': {
-        enum2 = 17;
+        enum3 = 17;
         break;
       }
       case 'name-too-long': {
-        enum2 = 18;
+        enum3 = 18;
         break;
       }
       case 'no-device': {
-        enum2 = 19;
+        enum3 = 19;
         break;
       }
       case 'no-entry': {
-        enum2 = 20;
+        enum3 = 20;
         break;
       }
       case 'no-lock': {
-        enum2 = 21;
+        enum3 = 21;
         break;
       }
       case 'insufficient-memory': {
-        enum2 = 22;
+        enum3 = 22;
         break;
       }
       case 'insufficient-space': {
-        enum2 = 23;
+        enum3 = 23;
         break;
       }
       case 'not-directory': {
-        enum2 = 24;
+        enum3 = 24;
         break;
       }
       case 'not-empty': {
-        enum2 = 25;
+        enum3 = 25;
         break;
       }
       case 'not-recoverable': {
-        enum2 = 26;
+        enum3 = 26;
         break;
       }
       case 'unsupported': {
-        enum2 = 27;
+        enum3 = 27;
         break;
       }
       case 'no-tty': {
-        enum2 = 28;
+        enum3 = 28;
         break;
       }
       case 'no-such-device': {
-        enum2 = 29;
+        enum3 = 29;
         break;
       }
       case 'overflow': {
-        enum2 = 30;
+        enum3 = 30;
         break;
       }
       case 'not-permitted': {
-        enum2 = 31;
+        enum3 = 31;
         break;
       }
       case 'pipe': {
-        enum2 = 32;
+        enum3 = 32;
         break;
       }
       case 'read-only': {
-        enum2 = 33;
+        enum3 = 33;
         break;
       }
       case 'invalid-seek': {
-        enum2 = 34;
+        enum3 = 34;
         break;
       }
       case 'text-file-busy': {
-        enum2 = 35;
+        enum3 = 35;
         break;
       }
       case 'cross-device': {
-        enum2 = 36;
+        enum3 = 36;
         break;
       }
       default: {
@@ -1204,44 +1302,56 @@ function trampoline13(arg0, arg1) {
           console.error(e);
         }
         
-        throw new TypeError(`"${val2}" is not one of the cases of error-code`);
+        throw new TypeError(`"${val3}" is not one of the cases of error-code`);
       }
     }
-    dataView(memory0).setInt8(arg1 + 1, enum2, true);
+    dataView(memory0).setInt8(arg1 + 1, enum3, true);
   }
 }
 
 function trampoline14(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable1.get(handle1).rep;
+  var rep2 = handleTable1[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable1.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(OutputStream.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: OutputStream.prototype.checkWrite.call(rsc0) };
+    ret = { tag: 'ok', val: rsc0.checkWrite()};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant4 = ret;
-  switch (variant4.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant5 = ret;
+  switch (variant5.tag) {
     case 'ok': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory0).setInt8(arg1 + 0, 0, true);
       dataView(memory0).setBigInt64(arg1 + 8, toUint64(e), true);
       break;
     }
     case 'err': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory0).setInt8(arg1 + 0, 1, true);
-      var variant3 = e;
-      switch (variant3.tag) {
+      var variant4 = e;
+      switch (variant4.tag) {
         case 'last-operation-failed': {
-          const e = variant3.val;
+          const e = variant4.val;
           dataView(memory0).setInt8(arg1 + 8, 0, true);
           if (!(e instanceof Error$1)) {
             throw new Error('Resource error: Not a valid "Error" resource.');
           }
-          var handle2 = handleCnt0++;
-          handleTable0.set(handle2, { rep: e, own: true });
-          dataView(memory0).setInt32(arg1 + 12, handle2, true);
+          var handle3 = e[symbolRscHandle];
+          
+          if (!handle3) {
+            const rep = e[symbolRscRep] || ++captureCnt0;
+            captureTable0.set(rep, e);
+            handle3 = rscTableCreateOwn(handleTable0, rep);
+          }
+          dataView(memory0).setInt32(arg1 + 12, handle3, true);
           break;
         }
         case 'closed': {
@@ -1249,7 +1359,7 @@ function trampoline14(arg0, arg1) {
           break;
         }
         default: {
-          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant3.tag)}\` (received \`${variant3}\`) specified for \`StreamError\``);
+          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant4.tag)}\` (received \`${variant4}\`) specified for \`StreamError\``);
         }
       }
       break;
@@ -1262,37 +1372,49 @@ function trampoline14(arg0, arg1) {
 
 function trampoline15(arg0, arg1, arg2, arg3) {
   var handle1 = arg0;
-  var rsc0 = handleTable1.get(handle1).rep;
-  var ptr2 = arg1;
-  var len2 = arg2;
-  var result2 = new Uint8Array(memory0.buffer.slice(ptr2, ptr2 + len2 * 1));
+  var rep2 = handleTable1[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable1.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(OutputStream.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
+  var ptr3 = arg1;
+  var len3 = arg2;
+  var result3 = new Uint8Array(memory0.buffer.slice(ptr3, ptr3 + len3 * 1));
   let ret;
   try {
-    ret = { tag: 'ok', val: OutputStream.prototype.write.call(rsc0, result2) };
+    ret = { tag: 'ok', val: rsc0.write(result3)};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant5 = ret;
-  switch (variant5.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant6 = ret;
+  switch (variant6.tag) {
     case 'ok': {
-      const e = variant5.val;
+      const e = variant6.val;
       dataView(memory0).setInt8(arg3 + 0, 0, true);
       break;
     }
     case 'err': {
-      const e = variant5.val;
+      const e = variant6.val;
       dataView(memory0).setInt8(arg3 + 0, 1, true);
-      var variant4 = e;
-      switch (variant4.tag) {
+      var variant5 = e;
+      switch (variant5.tag) {
         case 'last-operation-failed': {
-          const e = variant4.val;
+          const e = variant5.val;
           dataView(memory0).setInt8(arg3 + 4, 0, true);
           if (!(e instanceof Error$1)) {
             throw new Error('Resource error: Not a valid "Error" resource.');
           }
-          var handle3 = handleCnt0++;
-          handleTable0.set(handle3, { rep: e, own: true });
-          dataView(memory0).setInt32(arg3 + 8, handle3, true);
+          var handle4 = e[symbolRscHandle];
+          
+          if (!handle4) {
+            const rep = e[symbolRscRep] || ++captureCnt0;
+            captureTable0.set(rep, e);
+            handle4 = rscTableCreateOwn(handleTable0, rep);
+          }
+          dataView(memory0).setInt32(arg3 + 8, handle4, true);
           break;
         }
         case 'closed': {
@@ -1300,7 +1422,7 @@ function trampoline15(arg0, arg1, arg2, arg3) {
           break;
         }
         default: {
-          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant4.tag)}\` (received \`${variant4}\`) specified for \`StreamError\``);
+          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant5.tag)}\` (received \`${variant5}\`) specified for \`StreamError\``);
         }
       }
       break;
@@ -1313,37 +1435,49 @@ function trampoline15(arg0, arg1, arg2, arg3) {
 
 function trampoline16(arg0, arg1, arg2, arg3) {
   var handle1 = arg0;
-  var rsc0 = handleTable1.get(handle1).rep;
-  var ptr2 = arg1;
-  var len2 = arg2;
-  var result2 = new Uint8Array(memory0.buffer.slice(ptr2, ptr2 + len2 * 1));
+  var rep2 = handleTable1[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable1.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(OutputStream.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
+  var ptr3 = arg1;
+  var len3 = arg2;
+  var result3 = new Uint8Array(memory0.buffer.slice(ptr3, ptr3 + len3 * 1));
   let ret;
   try {
-    ret = { tag: 'ok', val: OutputStream.prototype.blockingWriteAndFlush.call(rsc0, result2) };
+    ret = { tag: 'ok', val: rsc0.blockingWriteAndFlush(result3)};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant5 = ret;
-  switch (variant5.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant6 = ret;
+  switch (variant6.tag) {
     case 'ok': {
-      const e = variant5.val;
+      const e = variant6.val;
       dataView(memory0).setInt8(arg3 + 0, 0, true);
       break;
     }
     case 'err': {
-      const e = variant5.val;
+      const e = variant6.val;
       dataView(memory0).setInt8(arg3 + 0, 1, true);
-      var variant4 = e;
-      switch (variant4.tag) {
+      var variant5 = e;
+      switch (variant5.tag) {
         case 'last-operation-failed': {
-          const e = variant4.val;
+          const e = variant5.val;
           dataView(memory0).setInt8(arg3 + 4, 0, true);
           if (!(e instanceof Error$1)) {
             throw new Error('Resource error: Not a valid "Error" resource.');
           }
-          var handle3 = handleCnt0++;
-          handleTable0.set(handle3, { rep: e, own: true });
-          dataView(memory0).setInt32(arg3 + 8, handle3, true);
+          var handle4 = e[symbolRscHandle];
+          
+          if (!handle4) {
+            const rep = e[symbolRscRep] || ++captureCnt0;
+            captureTable0.set(rep, e);
+            handle4 = rscTableCreateOwn(handleTable0, rep);
+          }
+          dataView(memory0).setInt32(arg3 + 8, handle4, true);
           break;
         }
         case 'closed': {
@@ -1351,7 +1485,7 @@ function trampoline16(arg0, arg1, arg2, arg3) {
           break;
         }
         default: {
-          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant4.tag)}\` (received \`${variant4}\`) specified for \`StreamError\``);
+          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant5.tag)}\` (received \`${variant5}\`) specified for \`StreamError\``);
         }
       }
       break;
@@ -1364,34 +1498,46 @@ function trampoline16(arg0, arg1, arg2, arg3) {
 
 function trampoline17(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable1.get(handle1).rep;
+  var rep2 = handleTable1[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable1.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(OutputStream.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: OutputStream.prototype.blockingFlush.call(rsc0) };
+    ret = { tag: 'ok', val: rsc0.blockingFlush()};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant4 = ret;
-  switch (variant4.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant5 = ret;
+  switch (variant5.tag) {
     case 'ok': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory0).setInt8(arg1 + 0, 0, true);
       break;
     }
     case 'err': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory0).setInt8(arg1 + 0, 1, true);
-      var variant3 = e;
-      switch (variant3.tag) {
+      var variant4 = e;
+      switch (variant4.tag) {
         case 'last-operation-failed': {
-          const e = variant3.val;
+          const e = variant4.val;
           dataView(memory0).setInt8(arg1 + 4, 0, true);
           if (!(e instanceof Error$1)) {
             throw new Error('Resource error: Not a valid "Error" resource.');
           }
-          var handle2 = handleCnt0++;
-          handleTable0.set(handle2, { rep: e, own: true });
-          dataView(memory0).setInt32(arg1 + 8, handle2, true);
+          var handle3 = e[symbolRscHandle];
+          
+          if (!handle3) {
+            const rep = e[symbolRscRep] || ++captureCnt0;
+            captureTable0.set(rep, e);
+            handle3 = rscTableCreateOwn(handleTable0, rep);
+          }
+          dataView(memory0).setInt32(arg1 + 8, handle3, true);
           break;
         }
         case 'closed': {
@@ -1399,7 +1545,7 @@ function trampoline17(arg0, arg1) {
           break;
         }
         default: {
-          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant3.tag)}\` (received \`${variant3}\`) specified for \`StreamError\``);
+          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant4.tag)}\` (received \`${variant4}\`) specified for \`StreamError\``);
         }
       }
       break;
@@ -1439,8 +1585,13 @@ function trampoline23() {
   if (!(ret instanceof OutputStream)) {
     throw new Error('Resource error: Not a valid "OutputStream" resource.');
   }
-  var handle0 = handleCnt1++;
-  handleTable1.set(handle0, { rep: ret, own: true });
+  var handle0 = ret[symbolRscHandle];
+  
+  if (!handle0) {
+    const rep = ret[symbolRscRep] || ++captureCnt1;
+    captureTable1.set(rep, ret);
+    handle0 = rscTableCreateOwn(handleTable1, rep);
+  }
   return handle0;
 }
 
@@ -1473,8 +1624,13 @@ function trampoline25() {
   if (!(ret instanceof InputStream)) {
     throw new Error('Resource error: Not a valid "InputStream" resource.');
   }
-  var handle0 = handleCnt2++;
-  handleTable2.set(handle0, { rep: ret, own: true });
+  var handle0 = ret[symbolRscHandle];
+  
+  if (!handle0) {
+    const rep = ret[symbolRscRep] || ++captureCnt2;
+    captureTable2.set(rep, ret);
+    handle0 = rscTableCreateOwn(handleTable2, rep);
+  }
   return handle0;
 }
 
@@ -1483,11 +1639,18 @@ function trampoline26() {
   if (!(ret instanceof OutputStream)) {
     throw new Error('Resource error: Not a valid "OutputStream" resource.');
   }
-  var handle0 = handleCnt1++;
-  handleTable1.set(handle0, { rep: ret, own: true });
+  var handle0 = ret[symbolRscHandle];
+  
+  if (!handle0) {
+    const rep = ret[symbolRscRep] || ++captureCnt1;
+    captureTable1.set(rep, ret);
+    handle0 = rscTableCreateOwn(handleTable1, rep);
+  }
   return handle0;
 }
 let exports6;
+let memory1;
+let realloc1;
 
 function trampoline27(arg0) {
   const ret = getDirectories();
@@ -1500,8 +1663,13 @@ function trampoline27(arg0) {
     if (!(tuple0_0 instanceof Descriptor)) {
       throw new Error('Resource error: Not a valid "Descriptor" resource.');
     }
-    var handle1 = handleCnt3++;
-    handleTable3.set(handle1, { rep: tuple0_0, own: true });
+    var handle1 = tuple0_0[symbolRscHandle];
+    
+    if (!handle1) {
+      const rep = tuple0_0[symbolRscRep] || ++captureCnt3;
+      captureTable3.set(rep, tuple0_0);
+      handle1 = rscTableCreateOwn(handleTable3, rep);
+    }
     dataView(memory1).setInt32(base + 0, handle1, true);
     var ptr2 = utf8Encode(tuple0_1, realloc1, memory1);
     var len2 = utf8EncodedLen;
@@ -1511,183 +1679,193 @@ function trampoline27(arg0) {
   dataView(memory1).setInt32(arg0 + 4, len3, true);
   dataView(memory1).setInt32(arg0 + 0, result3, true);
 }
-let memory1;
-let realloc1;
 
 function trampoline28(arg0, arg1, arg2) {
   var handle1 = arg0;
-  var rsc0 = handleTable3.get(handle1).rep;
+  var rep2 = handleTable3[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable3.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(Descriptor.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: Descriptor.prototype.writeViaStream.call(rsc0, BigInt.asUintN(64, arg1)) };
+    ret = { tag: 'ok', val: rsc0.writeViaStream(BigInt.asUintN(64, arg1))};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant4 = ret;
-  switch (variant4.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant5 = ret;
+  switch (variant5.tag) {
     case 'ok': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory1).setInt8(arg2 + 0, 0, true);
       if (!(e instanceof OutputStream)) {
         throw new Error('Resource error: Not a valid "OutputStream" resource.');
       }
-      var handle2 = handleCnt1++;
-      handleTable1.set(handle2, { rep: e, own: true });
-      dataView(memory1).setInt32(arg2 + 4, handle2, true);
+      var handle3 = e[symbolRscHandle];
+      
+      if (!handle3) {
+        const rep = e[symbolRscRep] || ++captureCnt1;
+        captureTable1.set(rep, e);
+        handle3 = rscTableCreateOwn(handleTable1, rep);
+      }
+      dataView(memory1).setInt32(arg2 + 4, handle3, true);
       break;
     }
     case 'err': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory1).setInt8(arg2 + 0, 1, true);
-      var val3 = e;
-      let enum3;
-      switch (val3) {
+      var val4 = e;
+      let enum4;
+      switch (val4) {
         case 'access': {
-          enum3 = 0;
+          enum4 = 0;
           break;
         }
         case 'would-block': {
-          enum3 = 1;
+          enum4 = 1;
           break;
         }
         case 'already': {
-          enum3 = 2;
+          enum4 = 2;
           break;
         }
         case 'bad-descriptor': {
-          enum3 = 3;
+          enum4 = 3;
           break;
         }
         case 'busy': {
-          enum3 = 4;
+          enum4 = 4;
           break;
         }
         case 'deadlock': {
-          enum3 = 5;
+          enum4 = 5;
           break;
         }
         case 'quota': {
-          enum3 = 6;
+          enum4 = 6;
           break;
         }
         case 'exist': {
-          enum3 = 7;
+          enum4 = 7;
           break;
         }
         case 'file-too-large': {
-          enum3 = 8;
+          enum4 = 8;
           break;
         }
         case 'illegal-byte-sequence': {
-          enum3 = 9;
+          enum4 = 9;
           break;
         }
         case 'in-progress': {
-          enum3 = 10;
+          enum4 = 10;
           break;
         }
         case 'interrupted': {
-          enum3 = 11;
+          enum4 = 11;
           break;
         }
         case 'invalid': {
-          enum3 = 12;
+          enum4 = 12;
           break;
         }
         case 'io': {
-          enum3 = 13;
+          enum4 = 13;
           break;
         }
         case 'is-directory': {
-          enum3 = 14;
+          enum4 = 14;
           break;
         }
         case 'loop': {
-          enum3 = 15;
+          enum4 = 15;
           break;
         }
         case 'too-many-links': {
-          enum3 = 16;
+          enum4 = 16;
           break;
         }
         case 'message-size': {
-          enum3 = 17;
+          enum4 = 17;
           break;
         }
         case 'name-too-long': {
-          enum3 = 18;
+          enum4 = 18;
           break;
         }
         case 'no-device': {
-          enum3 = 19;
+          enum4 = 19;
           break;
         }
         case 'no-entry': {
-          enum3 = 20;
+          enum4 = 20;
           break;
         }
         case 'no-lock': {
-          enum3 = 21;
+          enum4 = 21;
           break;
         }
         case 'insufficient-memory': {
-          enum3 = 22;
+          enum4 = 22;
           break;
         }
         case 'insufficient-space': {
-          enum3 = 23;
+          enum4 = 23;
           break;
         }
         case 'not-directory': {
-          enum3 = 24;
+          enum4 = 24;
           break;
         }
         case 'not-empty': {
-          enum3 = 25;
+          enum4 = 25;
           break;
         }
         case 'not-recoverable': {
-          enum3 = 26;
+          enum4 = 26;
           break;
         }
         case 'unsupported': {
-          enum3 = 27;
+          enum4 = 27;
           break;
         }
         case 'no-tty': {
-          enum3 = 28;
+          enum4 = 28;
           break;
         }
         case 'no-such-device': {
-          enum3 = 29;
+          enum4 = 29;
           break;
         }
         case 'overflow': {
-          enum3 = 30;
+          enum4 = 30;
           break;
         }
         case 'not-permitted': {
-          enum3 = 31;
+          enum4 = 31;
           break;
         }
         case 'pipe': {
-          enum3 = 32;
+          enum4 = 32;
           break;
         }
         case 'read-only': {
-          enum3 = 33;
+          enum4 = 33;
           break;
         }
         case 'invalid-seek': {
-          enum3 = 34;
+          enum4 = 34;
           break;
         }
         case 'text-file-busy': {
-          enum3 = 35;
+          enum4 = 35;
           break;
         }
         case 'cross-device': {
-          enum3 = 36;
+          enum4 = 36;
           break;
         }
         default: {
@@ -1695,10 +1873,10 @@ function trampoline28(arg0, arg1, arg2) {
             console.error(e);
           }
           
-          throw new TypeError(`"${val3}" is not one of the cases of error-code`);
+          throw new TypeError(`"${val4}" is not one of the cases of error-code`);
         }
       }
-      dataView(memory1).setInt8(arg2 + 4, enum3, true);
+      dataView(memory1).setInt8(arg2 + 4, enum4, true);
       break;
     }
     default: {
@@ -1709,178 +1887,190 @@ function trampoline28(arg0, arg1, arg2) {
 
 function trampoline29(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable3.get(handle1).rep;
+  var rep2 = handleTable3[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable3.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(Descriptor.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: Descriptor.prototype.appendViaStream.call(rsc0) };
+    ret = { tag: 'ok', val: rsc0.appendViaStream()};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant4 = ret;
-  switch (variant4.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant5 = ret;
+  switch (variant5.tag) {
     case 'ok': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory1).setInt8(arg1 + 0, 0, true);
       if (!(e instanceof OutputStream)) {
         throw new Error('Resource error: Not a valid "OutputStream" resource.');
       }
-      var handle2 = handleCnt1++;
-      handleTable1.set(handle2, { rep: e, own: true });
-      dataView(memory1).setInt32(arg1 + 4, handle2, true);
+      var handle3 = e[symbolRscHandle];
+      
+      if (!handle3) {
+        const rep = e[symbolRscRep] || ++captureCnt1;
+        captureTable1.set(rep, e);
+        handle3 = rscTableCreateOwn(handleTable1, rep);
+      }
+      dataView(memory1).setInt32(arg1 + 4, handle3, true);
       break;
     }
     case 'err': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory1).setInt8(arg1 + 0, 1, true);
-      var val3 = e;
-      let enum3;
-      switch (val3) {
+      var val4 = e;
+      let enum4;
+      switch (val4) {
         case 'access': {
-          enum3 = 0;
+          enum4 = 0;
           break;
         }
         case 'would-block': {
-          enum3 = 1;
+          enum4 = 1;
           break;
         }
         case 'already': {
-          enum3 = 2;
+          enum4 = 2;
           break;
         }
         case 'bad-descriptor': {
-          enum3 = 3;
+          enum4 = 3;
           break;
         }
         case 'busy': {
-          enum3 = 4;
+          enum4 = 4;
           break;
         }
         case 'deadlock': {
-          enum3 = 5;
+          enum4 = 5;
           break;
         }
         case 'quota': {
-          enum3 = 6;
+          enum4 = 6;
           break;
         }
         case 'exist': {
-          enum3 = 7;
+          enum4 = 7;
           break;
         }
         case 'file-too-large': {
-          enum3 = 8;
+          enum4 = 8;
           break;
         }
         case 'illegal-byte-sequence': {
-          enum3 = 9;
+          enum4 = 9;
           break;
         }
         case 'in-progress': {
-          enum3 = 10;
+          enum4 = 10;
           break;
         }
         case 'interrupted': {
-          enum3 = 11;
+          enum4 = 11;
           break;
         }
         case 'invalid': {
-          enum3 = 12;
+          enum4 = 12;
           break;
         }
         case 'io': {
-          enum3 = 13;
+          enum4 = 13;
           break;
         }
         case 'is-directory': {
-          enum3 = 14;
+          enum4 = 14;
           break;
         }
         case 'loop': {
-          enum3 = 15;
+          enum4 = 15;
           break;
         }
         case 'too-many-links': {
-          enum3 = 16;
+          enum4 = 16;
           break;
         }
         case 'message-size': {
-          enum3 = 17;
+          enum4 = 17;
           break;
         }
         case 'name-too-long': {
-          enum3 = 18;
+          enum4 = 18;
           break;
         }
         case 'no-device': {
-          enum3 = 19;
+          enum4 = 19;
           break;
         }
         case 'no-entry': {
-          enum3 = 20;
+          enum4 = 20;
           break;
         }
         case 'no-lock': {
-          enum3 = 21;
+          enum4 = 21;
           break;
         }
         case 'insufficient-memory': {
-          enum3 = 22;
+          enum4 = 22;
           break;
         }
         case 'insufficient-space': {
-          enum3 = 23;
+          enum4 = 23;
           break;
         }
         case 'not-directory': {
-          enum3 = 24;
+          enum4 = 24;
           break;
         }
         case 'not-empty': {
-          enum3 = 25;
+          enum4 = 25;
           break;
         }
         case 'not-recoverable': {
-          enum3 = 26;
+          enum4 = 26;
           break;
         }
         case 'unsupported': {
-          enum3 = 27;
+          enum4 = 27;
           break;
         }
         case 'no-tty': {
-          enum3 = 28;
+          enum4 = 28;
           break;
         }
         case 'no-such-device': {
-          enum3 = 29;
+          enum4 = 29;
           break;
         }
         case 'overflow': {
-          enum3 = 30;
+          enum4 = 30;
           break;
         }
         case 'not-permitted': {
-          enum3 = 31;
+          enum4 = 31;
           break;
         }
         case 'pipe': {
-          enum3 = 32;
+          enum4 = 32;
           break;
         }
         case 'read-only': {
-          enum3 = 33;
+          enum4 = 33;
           break;
         }
         case 'invalid-seek': {
-          enum3 = 34;
+          enum4 = 34;
           break;
         }
         case 'text-file-busy': {
-          enum3 = 35;
+          enum4 = 35;
           break;
         }
         case 'cross-device': {
-          enum3 = 36;
+          enum4 = 36;
           break;
         }
         default: {
@@ -1888,10 +2078,10 @@ function trampoline29(arg0, arg1) {
             console.error(e);
           }
           
-          throw new TypeError(`"${val3}" is not one of the cases of error-code`);
+          throw new TypeError(`"${val4}" is not one of the cases of error-code`);
         }
       }
-      dataView(memory1).setInt8(arg1 + 4, enum3, true);
+      dataView(memory1).setInt8(arg1 + 4, enum4, true);
       break;
     }
     default: {
@@ -1902,216 +2092,58 @@ function trampoline29(arg0, arg1) {
 
 function trampoline30(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable3.get(handle1).rep;
+  var rep2 = handleTable3[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable3.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(Descriptor.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: Descriptor.prototype.getType.call(rsc0) };
+    ret = { tag: 'ok', val: rsc0.getType()};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant4 = ret;
-  switch (variant4.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant5 = ret;
+  switch (variant5.tag) {
     case 'ok': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory1).setInt8(arg1 + 0, 0, true);
-      var val2 = e;
-      let enum2;
-      switch (val2) {
-        case 'unknown': {
-          enum2 = 0;
-          break;
-        }
-        case 'block-device': {
-          enum2 = 1;
-          break;
-        }
-        case 'character-device': {
-          enum2 = 2;
-          break;
-        }
-        case 'directory': {
-          enum2 = 3;
-          break;
-        }
-        case 'fifo': {
-          enum2 = 4;
-          break;
-        }
-        case 'symbolic-link': {
-          enum2 = 5;
-          break;
-        }
-        case 'regular-file': {
-          enum2 = 6;
-          break;
-        }
-        case 'socket': {
-          enum2 = 7;
-          break;
-        }
-        default: {
-          if ((e) instanceof Error) {
-            console.error(e);
-          }
-          
-          throw new TypeError(`"${val2}" is not one of the cases of descriptor-type`);
-        }
-      }
-      dataView(memory1).setInt8(arg1 + 1, enum2, true);
-      break;
-    }
-    case 'err': {
-      const e = variant4.val;
-      dataView(memory1).setInt8(arg1 + 0, 1, true);
       var val3 = e;
       let enum3;
       switch (val3) {
-        case 'access': {
+        case 'unknown': {
           enum3 = 0;
           break;
         }
-        case 'would-block': {
+        case 'block-device': {
           enum3 = 1;
           break;
         }
-        case 'already': {
+        case 'character-device': {
           enum3 = 2;
           break;
         }
-        case 'bad-descriptor': {
+        case 'directory': {
           enum3 = 3;
           break;
         }
-        case 'busy': {
+        case 'fifo': {
           enum3 = 4;
           break;
         }
-        case 'deadlock': {
+        case 'symbolic-link': {
           enum3 = 5;
           break;
         }
-        case 'quota': {
+        case 'regular-file': {
           enum3 = 6;
           break;
         }
-        case 'exist': {
+        case 'socket': {
           enum3 = 7;
-          break;
-        }
-        case 'file-too-large': {
-          enum3 = 8;
-          break;
-        }
-        case 'illegal-byte-sequence': {
-          enum3 = 9;
-          break;
-        }
-        case 'in-progress': {
-          enum3 = 10;
-          break;
-        }
-        case 'interrupted': {
-          enum3 = 11;
-          break;
-        }
-        case 'invalid': {
-          enum3 = 12;
-          break;
-        }
-        case 'io': {
-          enum3 = 13;
-          break;
-        }
-        case 'is-directory': {
-          enum3 = 14;
-          break;
-        }
-        case 'loop': {
-          enum3 = 15;
-          break;
-        }
-        case 'too-many-links': {
-          enum3 = 16;
-          break;
-        }
-        case 'message-size': {
-          enum3 = 17;
-          break;
-        }
-        case 'name-too-long': {
-          enum3 = 18;
-          break;
-        }
-        case 'no-device': {
-          enum3 = 19;
-          break;
-        }
-        case 'no-entry': {
-          enum3 = 20;
-          break;
-        }
-        case 'no-lock': {
-          enum3 = 21;
-          break;
-        }
-        case 'insufficient-memory': {
-          enum3 = 22;
-          break;
-        }
-        case 'insufficient-space': {
-          enum3 = 23;
-          break;
-        }
-        case 'not-directory': {
-          enum3 = 24;
-          break;
-        }
-        case 'not-empty': {
-          enum3 = 25;
-          break;
-        }
-        case 'not-recoverable': {
-          enum3 = 26;
-          break;
-        }
-        case 'unsupported': {
-          enum3 = 27;
-          break;
-        }
-        case 'no-tty': {
-          enum3 = 28;
-          break;
-        }
-        case 'no-such-device': {
-          enum3 = 29;
-          break;
-        }
-        case 'overflow': {
-          enum3 = 30;
-          break;
-        }
-        case 'not-permitted': {
-          enum3 = 31;
-          break;
-        }
-        case 'pipe': {
-          enum3 = 32;
-          break;
-        }
-        case 'read-only': {
-          enum3 = 33;
-          break;
-        }
-        case 'invalid-seek': {
-          enum3 = 34;
-          break;
-        }
-        case 'text-file-busy': {
-          enum3 = 35;
-          break;
-        }
-        case 'cross-device': {
-          enum3 = 36;
           break;
         }
         default: {
@@ -2119,10 +2151,175 @@ function trampoline30(arg0, arg1) {
             console.error(e);
           }
           
-          throw new TypeError(`"${val3}" is not one of the cases of error-code`);
+          throw new TypeError(`"${val3}" is not one of the cases of descriptor-type`);
         }
       }
       dataView(memory1).setInt8(arg1 + 1, enum3, true);
+      break;
+    }
+    case 'err': {
+      const e = variant5.val;
+      dataView(memory1).setInt8(arg1 + 0, 1, true);
+      var val4 = e;
+      let enum4;
+      switch (val4) {
+        case 'access': {
+          enum4 = 0;
+          break;
+        }
+        case 'would-block': {
+          enum4 = 1;
+          break;
+        }
+        case 'already': {
+          enum4 = 2;
+          break;
+        }
+        case 'bad-descriptor': {
+          enum4 = 3;
+          break;
+        }
+        case 'busy': {
+          enum4 = 4;
+          break;
+        }
+        case 'deadlock': {
+          enum4 = 5;
+          break;
+        }
+        case 'quota': {
+          enum4 = 6;
+          break;
+        }
+        case 'exist': {
+          enum4 = 7;
+          break;
+        }
+        case 'file-too-large': {
+          enum4 = 8;
+          break;
+        }
+        case 'illegal-byte-sequence': {
+          enum4 = 9;
+          break;
+        }
+        case 'in-progress': {
+          enum4 = 10;
+          break;
+        }
+        case 'interrupted': {
+          enum4 = 11;
+          break;
+        }
+        case 'invalid': {
+          enum4 = 12;
+          break;
+        }
+        case 'io': {
+          enum4 = 13;
+          break;
+        }
+        case 'is-directory': {
+          enum4 = 14;
+          break;
+        }
+        case 'loop': {
+          enum4 = 15;
+          break;
+        }
+        case 'too-many-links': {
+          enum4 = 16;
+          break;
+        }
+        case 'message-size': {
+          enum4 = 17;
+          break;
+        }
+        case 'name-too-long': {
+          enum4 = 18;
+          break;
+        }
+        case 'no-device': {
+          enum4 = 19;
+          break;
+        }
+        case 'no-entry': {
+          enum4 = 20;
+          break;
+        }
+        case 'no-lock': {
+          enum4 = 21;
+          break;
+        }
+        case 'insufficient-memory': {
+          enum4 = 22;
+          break;
+        }
+        case 'insufficient-space': {
+          enum4 = 23;
+          break;
+        }
+        case 'not-directory': {
+          enum4 = 24;
+          break;
+        }
+        case 'not-empty': {
+          enum4 = 25;
+          break;
+        }
+        case 'not-recoverable': {
+          enum4 = 26;
+          break;
+        }
+        case 'unsupported': {
+          enum4 = 27;
+          break;
+        }
+        case 'no-tty': {
+          enum4 = 28;
+          break;
+        }
+        case 'no-such-device': {
+          enum4 = 29;
+          break;
+        }
+        case 'overflow': {
+          enum4 = 30;
+          break;
+        }
+        case 'not-permitted': {
+          enum4 = 31;
+          break;
+        }
+        case 'pipe': {
+          enum4 = 32;
+          break;
+        }
+        case 'read-only': {
+          enum4 = 33;
+          break;
+        }
+        case 'invalid-seek': {
+          enum4 = 34;
+          break;
+        }
+        case 'text-file-busy': {
+          enum4 = 35;
+          break;
+        }
+        case 'cross-device': {
+          enum4 = 36;
+          break;
+        }
+        default: {
+          if ((e) instanceof Error) {
+            console.error(e);
+          }
+          
+          throw new TypeError(`"${val4}" is not one of the cases of error-code`);
+        }
+      }
+      dataView(memory1).setInt8(arg1 + 1, enum4, true);
       break;
     }
     default: {
@@ -2133,249 +2330,256 @@ function trampoline30(arg0, arg1) {
 
 function trampoline31(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable3.get(handle1).rep;
+  var rep2 = handleTable3[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable3.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(Descriptor.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: Descriptor.prototype.stat.call(rsc0) };
+    ret = { tag: 'ok', val: rsc0.stat()};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant11 = ret;
-  switch (variant11.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant12 = ret;
+  switch (variant12.tag) {
     case 'ok': {
-      const e = variant11.val;
+      const e = variant12.val;
       dataView(memory1).setInt8(arg1 + 0, 0, true);
-      var {type: v2_0, linkCount: v2_1, size: v2_2, dataAccessTimestamp: v2_3, dataModificationTimestamp: v2_4, statusChangeTimestamp: v2_5 } = e;
-      var val3 = v2_0;
-      let enum3;
-      switch (val3) {
+      var {type: v3_0, linkCount: v3_1, size: v3_2, dataAccessTimestamp: v3_3, dataModificationTimestamp: v3_4, statusChangeTimestamp: v3_5 } = e;
+      var val4 = v3_0;
+      let enum4;
+      switch (val4) {
         case 'unknown': {
-          enum3 = 0;
+          enum4 = 0;
           break;
         }
         case 'block-device': {
-          enum3 = 1;
+          enum4 = 1;
           break;
         }
         case 'character-device': {
-          enum3 = 2;
+          enum4 = 2;
           break;
         }
         case 'directory': {
-          enum3 = 3;
+          enum4 = 3;
           break;
         }
         case 'fifo': {
-          enum3 = 4;
+          enum4 = 4;
           break;
         }
         case 'symbolic-link': {
-          enum3 = 5;
+          enum4 = 5;
           break;
         }
         case 'regular-file': {
-          enum3 = 6;
+          enum4 = 6;
           break;
         }
         case 'socket': {
-          enum3 = 7;
+          enum4 = 7;
           break;
         }
         default: {
-          if ((v2_0) instanceof Error) {
-            console.error(v2_0);
+          if ((v3_0) instanceof Error) {
+            console.error(v3_0);
           }
           
-          throw new TypeError(`"${val3}" is not one of the cases of descriptor-type`);
+          throw new TypeError(`"${val4}" is not one of the cases of descriptor-type`);
         }
       }
-      dataView(memory1).setInt8(arg1 + 8, enum3, true);
-      dataView(memory1).setBigInt64(arg1 + 16, toUint64(v2_1), true);
-      dataView(memory1).setBigInt64(arg1 + 24, toUint64(v2_2), true);
-      var variant5 = v2_3;
-      if (variant5 === null || variant5=== undefined) {
+      dataView(memory1).setInt8(arg1 + 8, enum4, true);
+      dataView(memory1).setBigInt64(arg1 + 16, toUint64(v3_1), true);
+      dataView(memory1).setBigInt64(arg1 + 24, toUint64(v3_2), true);
+      var variant6 = v3_3;
+      if (variant6 === null || variant6=== undefined) {
         dataView(memory1).setInt8(arg1 + 32, 0, true);
       } else {
-        const e = variant5;
+        const e = variant6;
         dataView(memory1).setInt8(arg1 + 32, 1, true);
-        var {seconds: v4_0, nanoseconds: v4_1 } = e;
-        dataView(memory1).setBigInt64(arg1 + 40, toUint64(v4_0), true);
-        dataView(memory1).setInt32(arg1 + 48, toUint32(v4_1), true);
+        var {seconds: v5_0, nanoseconds: v5_1 } = e;
+        dataView(memory1).setBigInt64(arg1 + 40, toUint64(v5_0), true);
+        dataView(memory1).setInt32(arg1 + 48, toUint32(v5_1), true);
       }
-      var variant7 = v2_4;
-      if (variant7 === null || variant7=== undefined) {
+      var variant8 = v3_4;
+      if (variant8 === null || variant8=== undefined) {
         dataView(memory1).setInt8(arg1 + 56, 0, true);
       } else {
-        const e = variant7;
+        const e = variant8;
         dataView(memory1).setInt8(arg1 + 56, 1, true);
-        var {seconds: v6_0, nanoseconds: v6_1 } = e;
-        dataView(memory1).setBigInt64(arg1 + 64, toUint64(v6_0), true);
-        dataView(memory1).setInt32(arg1 + 72, toUint32(v6_1), true);
+        var {seconds: v7_0, nanoseconds: v7_1 } = e;
+        dataView(memory1).setBigInt64(arg1 + 64, toUint64(v7_0), true);
+        dataView(memory1).setInt32(arg1 + 72, toUint32(v7_1), true);
       }
-      var variant9 = v2_5;
-      if (variant9 === null || variant9=== undefined) {
+      var variant10 = v3_5;
+      if (variant10 === null || variant10=== undefined) {
         dataView(memory1).setInt8(arg1 + 80, 0, true);
       } else {
-        const e = variant9;
+        const e = variant10;
         dataView(memory1).setInt8(arg1 + 80, 1, true);
-        var {seconds: v8_0, nanoseconds: v8_1 } = e;
-        dataView(memory1).setBigInt64(arg1 + 88, toUint64(v8_0), true);
-        dataView(memory1).setInt32(arg1 + 96, toUint32(v8_1), true);
+        var {seconds: v9_0, nanoseconds: v9_1 } = e;
+        dataView(memory1).setBigInt64(arg1 + 88, toUint64(v9_0), true);
+        dataView(memory1).setInt32(arg1 + 96, toUint32(v9_1), true);
       }
       break;
     }
     case 'err': {
-      const e = variant11.val;
+      const e = variant12.val;
       dataView(memory1).setInt8(arg1 + 0, 1, true);
-      var val10 = e;
-      let enum10;
-      switch (val10) {
+      var val11 = e;
+      let enum11;
+      switch (val11) {
         case 'access': {
-          enum10 = 0;
+          enum11 = 0;
           break;
         }
         case 'would-block': {
-          enum10 = 1;
+          enum11 = 1;
           break;
         }
         case 'already': {
-          enum10 = 2;
+          enum11 = 2;
           break;
         }
         case 'bad-descriptor': {
-          enum10 = 3;
+          enum11 = 3;
           break;
         }
         case 'busy': {
-          enum10 = 4;
+          enum11 = 4;
           break;
         }
         case 'deadlock': {
-          enum10 = 5;
+          enum11 = 5;
           break;
         }
         case 'quota': {
-          enum10 = 6;
+          enum11 = 6;
           break;
         }
         case 'exist': {
-          enum10 = 7;
+          enum11 = 7;
           break;
         }
         case 'file-too-large': {
-          enum10 = 8;
+          enum11 = 8;
           break;
         }
         case 'illegal-byte-sequence': {
-          enum10 = 9;
+          enum11 = 9;
           break;
         }
         case 'in-progress': {
-          enum10 = 10;
+          enum11 = 10;
           break;
         }
         case 'interrupted': {
-          enum10 = 11;
+          enum11 = 11;
           break;
         }
         case 'invalid': {
-          enum10 = 12;
+          enum11 = 12;
           break;
         }
         case 'io': {
-          enum10 = 13;
+          enum11 = 13;
           break;
         }
         case 'is-directory': {
-          enum10 = 14;
+          enum11 = 14;
           break;
         }
         case 'loop': {
-          enum10 = 15;
+          enum11 = 15;
           break;
         }
         case 'too-many-links': {
-          enum10 = 16;
+          enum11 = 16;
           break;
         }
         case 'message-size': {
-          enum10 = 17;
+          enum11 = 17;
           break;
         }
         case 'name-too-long': {
-          enum10 = 18;
+          enum11 = 18;
           break;
         }
         case 'no-device': {
-          enum10 = 19;
+          enum11 = 19;
           break;
         }
         case 'no-entry': {
-          enum10 = 20;
+          enum11 = 20;
           break;
         }
         case 'no-lock': {
-          enum10 = 21;
+          enum11 = 21;
           break;
         }
         case 'insufficient-memory': {
-          enum10 = 22;
+          enum11 = 22;
           break;
         }
         case 'insufficient-space': {
-          enum10 = 23;
+          enum11 = 23;
           break;
         }
         case 'not-directory': {
-          enum10 = 24;
+          enum11 = 24;
           break;
         }
         case 'not-empty': {
-          enum10 = 25;
+          enum11 = 25;
           break;
         }
         case 'not-recoverable': {
-          enum10 = 26;
+          enum11 = 26;
           break;
         }
         case 'unsupported': {
-          enum10 = 27;
+          enum11 = 27;
           break;
         }
         case 'no-tty': {
-          enum10 = 28;
+          enum11 = 28;
           break;
         }
         case 'no-such-device': {
-          enum10 = 29;
+          enum11 = 29;
           break;
         }
         case 'overflow': {
-          enum10 = 30;
+          enum11 = 30;
           break;
         }
         case 'not-permitted': {
-          enum10 = 31;
+          enum11 = 31;
           break;
         }
         case 'pipe': {
-          enum10 = 32;
+          enum11 = 32;
           break;
         }
         case 'read-only': {
-          enum10 = 33;
+          enum11 = 33;
           break;
         }
         case 'invalid-seek': {
-          enum10 = 34;
+          enum11 = 34;
           break;
         }
         case 'text-file-busy': {
-          enum10 = 35;
+          enum11 = 35;
           break;
         }
         case 'cross-device': {
-          enum10 = 36;
+          enum11 = 36;
           break;
         }
         default: {
@@ -2383,10 +2587,10 @@ function trampoline31(arg0, arg1) {
             console.error(e);
           }
           
-          throw new TypeError(`"${val10}" is not one of the cases of error-code`);
+          throw new TypeError(`"${val11}" is not one of the cases of error-code`);
         }
       }
-      dataView(memory1).setInt8(arg1 + 8, enum10, true);
+      dataView(memory1).setInt8(arg1 + 8, enum11, true);
       break;
     }
     default: {
@@ -2397,163 +2601,170 @@ function trampoline31(arg0, arg1) {
 
 function trampoline32(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable0.get(handle1).rep;
+  var rep2 = handleTable0[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable0.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(Error$1.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   const ret = filesystemErrorCode(rsc0);
-  var variant3 = ret;
-  if (variant3 === null || variant3=== undefined) {
+  rsc0[symbolRscHandle] = null;
+  var variant4 = ret;
+  if (variant4 === null || variant4=== undefined) {
     dataView(memory1).setInt8(arg1 + 0, 0, true);
   } else {
-    const e = variant3;
+    const e = variant4;
     dataView(memory1).setInt8(arg1 + 0, 1, true);
-    var val2 = e;
-    let enum2;
-    switch (val2) {
+    var val3 = e;
+    let enum3;
+    switch (val3) {
       case 'access': {
-        enum2 = 0;
+        enum3 = 0;
         break;
       }
       case 'would-block': {
-        enum2 = 1;
+        enum3 = 1;
         break;
       }
       case 'already': {
-        enum2 = 2;
+        enum3 = 2;
         break;
       }
       case 'bad-descriptor': {
-        enum2 = 3;
+        enum3 = 3;
         break;
       }
       case 'busy': {
-        enum2 = 4;
+        enum3 = 4;
         break;
       }
       case 'deadlock': {
-        enum2 = 5;
+        enum3 = 5;
         break;
       }
       case 'quota': {
-        enum2 = 6;
+        enum3 = 6;
         break;
       }
       case 'exist': {
-        enum2 = 7;
+        enum3 = 7;
         break;
       }
       case 'file-too-large': {
-        enum2 = 8;
+        enum3 = 8;
         break;
       }
       case 'illegal-byte-sequence': {
-        enum2 = 9;
+        enum3 = 9;
         break;
       }
       case 'in-progress': {
-        enum2 = 10;
+        enum3 = 10;
         break;
       }
       case 'interrupted': {
-        enum2 = 11;
+        enum3 = 11;
         break;
       }
       case 'invalid': {
-        enum2 = 12;
+        enum3 = 12;
         break;
       }
       case 'io': {
-        enum2 = 13;
+        enum3 = 13;
         break;
       }
       case 'is-directory': {
-        enum2 = 14;
+        enum3 = 14;
         break;
       }
       case 'loop': {
-        enum2 = 15;
+        enum3 = 15;
         break;
       }
       case 'too-many-links': {
-        enum2 = 16;
+        enum3 = 16;
         break;
       }
       case 'message-size': {
-        enum2 = 17;
+        enum3 = 17;
         break;
       }
       case 'name-too-long': {
-        enum2 = 18;
+        enum3 = 18;
         break;
       }
       case 'no-device': {
-        enum2 = 19;
+        enum3 = 19;
         break;
       }
       case 'no-entry': {
-        enum2 = 20;
+        enum3 = 20;
         break;
       }
       case 'no-lock': {
-        enum2 = 21;
+        enum3 = 21;
         break;
       }
       case 'insufficient-memory': {
-        enum2 = 22;
+        enum3 = 22;
         break;
       }
       case 'insufficient-space': {
-        enum2 = 23;
+        enum3 = 23;
         break;
       }
       case 'not-directory': {
-        enum2 = 24;
+        enum3 = 24;
         break;
       }
       case 'not-empty': {
-        enum2 = 25;
+        enum3 = 25;
         break;
       }
       case 'not-recoverable': {
-        enum2 = 26;
+        enum3 = 26;
         break;
       }
       case 'unsupported': {
-        enum2 = 27;
+        enum3 = 27;
         break;
       }
       case 'no-tty': {
-        enum2 = 28;
+        enum3 = 28;
         break;
       }
       case 'no-such-device': {
-        enum2 = 29;
+        enum3 = 29;
         break;
       }
       case 'overflow': {
-        enum2 = 30;
+        enum3 = 30;
         break;
       }
       case 'not-permitted': {
-        enum2 = 31;
+        enum3 = 31;
         break;
       }
       case 'pipe': {
-        enum2 = 32;
+        enum3 = 32;
         break;
       }
       case 'read-only': {
-        enum2 = 33;
+        enum3 = 33;
         break;
       }
       case 'invalid-seek': {
-        enum2 = 34;
+        enum3 = 34;
         break;
       }
       case 'text-file-busy': {
-        enum2 = 35;
+        enum3 = 35;
         break;
       }
       case 'cross-device': {
-        enum2 = 36;
+        enum3 = 36;
         break;
       }
       default: {
@@ -2561,44 +2772,56 @@ function trampoline32(arg0, arg1) {
           console.error(e);
         }
         
-        throw new TypeError(`"${val2}" is not one of the cases of error-code`);
+        throw new TypeError(`"${val3}" is not one of the cases of error-code`);
       }
     }
-    dataView(memory1).setInt8(arg1 + 1, enum2, true);
+    dataView(memory1).setInt8(arg1 + 1, enum3, true);
   }
 }
 
 function trampoline33(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable1.get(handle1).rep;
+  var rep2 = handleTable1[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable1.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(OutputStream.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: OutputStream.prototype.checkWrite.call(rsc0) };
+    ret = { tag: 'ok', val: rsc0.checkWrite()};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant4 = ret;
-  switch (variant4.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant5 = ret;
+  switch (variant5.tag) {
     case 'ok': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory1).setInt8(arg1 + 0, 0, true);
       dataView(memory1).setBigInt64(arg1 + 8, toUint64(e), true);
       break;
     }
     case 'err': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory1).setInt8(arg1 + 0, 1, true);
-      var variant3 = e;
-      switch (variant3.tag) {
+      var variant4 = e;
+      switch (variant4.tag) {
         case 'last-operation-failed': {
-          const e = variant3.val;
+          const e = variant4.val;
           dataView(memory1).setInt8(arg1 + 8, 0, true);
           if (!(e instanceof Error$1)) {
             throw new Error('Resource error: Not a valid "Error" resource.');
           }
-          var handle2 = handleCnt0++;
-          handleTable0.set(handle2, { rep: e, own: true });
-          dataView(memory1).setInt32(arg1 + 12, handle2, true);
+          var handle3 = e[symbolRscHandle];
+          
+          if (!handle3) {
+            const rep = e[symbolRscRep] || ++captureCnt0;
+            captureTable0.set(rep, e);
+            handle3 = rscTableCreateOwn(handleTable0, rep);
+          }
+          dataView(memory1).setInt32(arg1 + 12, handle3, true);
           break;
         }
         case 'closed': {
@@ -2606,7 +2829,7 @@ function trampoline33(arg0, arg1) {
           break;
         }
         default: {
-          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant3.tag)}\` (received \`${variant3}\`) specified for \`StreamError\``);
+          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant4.tag)}\` (received \`${variant4}\`) specified for \`StreamError\``);
         }
       }
       break;
@@ -2619,37 +2842,49 @@ function trampoline33(arg0, arg1) {
 
 function trampoline34(arg0, arg1, arg2, arg3) {
   var handle1 = arg0;
-  var rsc0 = handleTable1.get(handle1).rep;
-  var ptr2 = arg1;
-  var len2 = arg2;
-  var result2 = new Uint8Array(memory1.buffer.slice(ptr2, ptr2 + len2 * 1));
+  var rep2 = handleTable1[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable1.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(OutputStream.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
+  var ptr3 = arg1;
+  var len3 = arg2;
+  var result3 = new Uint8Array(memory1.buffer.slice(ptr3, ptr3 + len3 * 1));
   let ret;
   try {
-    ret = { tag: 'ok', val: OutputStream.prototype.write.call(rsc0, result2) };
+    ret = { tag: 'ok', val: rsc0.write(result3)};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant5 = ret;
-  switch (variant5.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant6 = ret;
+  switch (variant6.tag) {
     case 'ok': {
-      const e = variant5.val;
+      const e = variant6.val;
       dataView(memory1).setInt8(arg3 + 0, 0, true);
       break;
     }
     case 'err': {
-      const e = variant5.val;
+      const e = variant6.val;
       dataView(memory1).setInt8(arg3 + 0, 1, true);
-      var variant4 = e;
-      switch (variant4.tag) {
+      var variant5 = e;
+      switch (variant5.tag) {
         case 'last-operation-failed': {
-          const e = variant4.val;
+          const e = variant5.val;
           dataView(memory1).setInt8(arg3 + 4, 0, true);
           if (!(e instanceof Error$1)) {
             throw new Error('Resource error: Not a valid "Error" resource.');
           }
-          var handle3 = handleCnt0++;
-          handleTable0.set(handle3, { rep: e, own: true });
-          dataView(memory1).setInt32(arg3 + 8, handle3, true);
+          var handle4 = e[symbolRscHandle];
+          
+          if (!handle4) {
+            const rep = e[symbolRscRep] || ++captureCnt0;
+            captureTable0.set(rep, e);
+            handle4 = rscTableCreateOwn(handleTable0, rep);
+          }
+          dataView(memory1).setInt32(arg3 + 8, handle4, true);
           break;
         }
         case 'closed': {
@@ -2657,7 +2892,7 @@ function trampoline34(arg0, arg1, arg2, arg3) {
           break;
         }
         default: {
-          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant4.tag)}\` (received \`${variant4}\`) specified for \`StreamError\``);
+          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant5.tag)}\` (received \`${variant5}\`) specified for \`StreamError\``);
         }
       }
       break;
@@ -2670,37 +2905,49 @@ function trampoline34(arg0, arg1, arg2, arg3) {
 
 function trampoline35(arg0, arg1, arg2, arg3) {
   var handle1 = arg0;
-  var rsc0 = handleTable1.get(handle1).rep;
-  var ptr2 = arg1;
-  var len2 = arg2;
-  var result2 = new Uint8Array(memory1.buffer.slice(ptr2, ptr2 + len2 * 1));
+  var rep2 = handleTable1[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable1.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(OutputStream.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
+  var ptr3 = arg1;
+  var len3 = arg2;
+  var result3 = new Uint8Array(memory1.buffer.slice(ptr3, ptr3 + len3 * 1));
   let ret;
   try {
-    ret = { tag: 'ok', val: OutputStream.prototype.blockingWriteAndFlush.call(rsc0, result2) };
+    ret = { tag: 'ok', val: rsc0.blockingWriteAndFlush(result3)};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant5 = ret;
-  switch (variant5.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant6 = ret;
+  switch (variant6.tag) {
     case 'ok': {
-      const e = variant5.val;
+      const e = variant6.val;
       dataView(memory1).setInt8(arg3 + 0, 0, true);
       break;
     }
     case 'err': {
-      const e = variant5.val;
+      const e = variant6.val;
       dataView(memory1).setInt8(arg3 + 0, 1, true);
-      var variant4 = e;
-      switch (variant4.tag) {
+      var variant5 = e;
+      switch (variant5.tag) {
         case 'last-operation-failed': {
-          const e = variant4.val;
+          const e = variant5.val;
           dataView(memory1).setInt8(arg3 + 4, 0, true);
           if (!(e instanceof Error$1)) {
             throw new Error('Resource error: Not a valid "Error" resource.');
           }
-          var handle3 = handleCnt0++;
-          handleTable0.set(handle3, { rep: e, own: true });
-          dataView(memory1).setInt32(arg3 + 8, handle3, true);
+          var handle4 = e[symbolRscHandle];
+          
+          if (!handle4) {
+            const rep = e[symbolRscRep] || ++captureCnt0;
+            captureTable0.set(rep, e);
+            handle4 = rscTableCreateOwn(handleTable0, rep);
+          }
+          dataView(memory1).setInt32(arg3 + 8, handle4, true);
           break;
         }
         case 'closed': {
@@ -2708,7 +2955,7 @@ function trampoline35(arg0, arg1, arg2, arg3) {
           break;
         }
         default: {
-          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant4.tag)}\` (received \`${variant4}\`) specified for \`StreamError\``);
+          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant5.tag)}\` (received \`${variant5}\`) specified for \`StreamError\``);
         }
       }
       break;
@@ -2721,34 +2968,46 @@ function trampoline35(arg0, arg1, arg2, arg3) {
 
 function trampoline36(arg0, arg1) {
   var handle1 = arg0;
-  var rsc0 = handleTable1.get(handle1).rep;
+  var rep2 = handleTable1[(handle1 << 1) + 1] & ~T_FLAG;
+  var rsc0 = captureTable1.get(rep2);
+  if (!rsc0) {
+    rsc0 = Object.create(OutputStream.prototype);
+    Object.defineProperty(rsc0, symbolRscHandle, { writable: true, value: handle1});
+    Object.defineProperty(rsc0, symbolRscRep, { writable: true, value: rep2});
+  }
   let ret;
   try {
-    ret = { tag: 'ok', val: OutputStream.prototype.blockingFlush.call(rsc0) };
+    ret = { tag: 'ok', val: rsc0.blockingFlush()};
   } catch (e) {
     ret = { tag: 'err', val: getErrorPayload(e) };
   }
-  var variant4 = ret;
-  switch (variant4.tag) {
+  rsc0[symbolRscHandle] = null;
+  var variant5 = ret;
+  switch (variant5.tag) {
     case 'ok': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory1).setInt8(arg1 + 0, 0, true);
       break;
     }
     case 'err': {
-      const e = variant4.val;
+      const e = variant5.val;
       dataView(memory1).setInt8(arg1 + 0, 1, true);
-      var variant3 = e;
-      switch (variant3.tag) {
+      var variant4 = e;
+      switch (variant4.tag) {
         case 'last-operation-failed': {
-          const e = variant3.val;
+          const e = variant4.val;
           dataView(memory1).setInt8(arg1 + 4, 0, true);
           if (!(e instanceof Error$1)) {
             throw new Error('Resource error: Not a valid "Error" resource.');
           }
-          var handle2 = handleCnt0++;
-          handleTable0.set(handle2, { rep: e, own: true });
-          dataView(memory1).setInt32(arg1 + 8, handle2, true);
+          var handle3 = e[symbolRscHandle];
+          
+          if (!handle3) {
+            const rep = e[symbolRscRep] || ++captureCnt0;
+            captureTable0.set(rep, e);
+            handle3 = rscTableCreateOwn(handleTable0, rep);
+          }
+          dataView(memory1).setInt32(arg1 + 8, handle3, true);
           break;
         }
         case 'closed': {
@@ -2756,7 +3015,7 @@ function trampoline36(arg0, arg1) {
           break;
         }
         default: {
-          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant3.tag)}\` (received \`${variant3}\`) specified for \`StreamError\``);
+          throw new TypeError(`invalid variant tag value \`${JSON.stringify(variant4.tag)}\` (received \`${variant4}\`) specified for \`StreamError\``);
         }
       }
       break;
@@ -2798,84 +3057,116 @@ let postReturn0;
 let postReturn1;
 let postReturn2;
 let postReturn3;
+const handleTable5 = [T_FLAG, 0];
+const captureTable0= new Map();
+let captureCnt0 = 0;
+handleTables[5] = handleTable5;
 function trampoline0(handle) {
-  const handleEntry = handleTable5.get(handle);
-  if (!handleEntry) {
-    throw new Error(`Resource error: Invalid handle ${handle}`);
-  }
-  handleTable5.delete(handle);
-  if (handleEntry.own && handleEntry.rep[symbolDispose]) {
-    handleEntry.rep[symbolDispose]();
+  const handleEntry = rscTableRemove(handleTable5, handle);
+  if (!handleEntry.own) throw new Error('Internal error: Unexpected borrow handle');
+  const rsc = captureTable0.get(handleEntry.rep);
+  if (rsc) {
+    if (rsc[symbolDispose]) rsc[symbolDispose]();
+    captureTable0.delete(handleEntry.rep);
+  } else if (Error$1[symbolCabiDispose]) {
+    Error$1[symbolCabiDispose](handleEntry.rep);
   }
 }
+const handleTable6 = [T_FLAG, 0];
+const captureTable2= new Map();
+let captureCnt2 = 0;
+handleTables[6] = handleTable6;
 function trampoline1(handle) {
-  const handleEntry = handleTable6.get(handle);
-  if (!handleEntry) {
-    throw new Error(`Resource error: Invalid handle ${handle}`);
-  }
-  handleTable6.delete(handle);
-  if (handleEntry.own && handleEntry.rep[symbolDispose]) {
-    handleEntry.rep[symbolDispose]();
+  const handleEntry = rscTableRemove(handleTable6, handle);
+  if (!handleEntry.own) throw new Error('Internal error: Unexpected borrow handle');
+  const rsc = captureTable2.get(handleEntry.rep);
+  if (rsc) {
+    if (rsc[symbolDispose]) rsc[symbolDispose]();
+    captureTable2.delete(handleEntry.rep);
+  } else if (InputStream[symbolCabiDispose]) {
+    InputStream[symbolCabiDispose](handleEntry.rep);
   }
 }
+const handleTable7 = [T_FLAG, 0];
+const captureTable1= new Map();
+let captureCnt1 = 0;
+handleTables[7] = handleTable7;
 function trampoline2(handle) {
-  const handleEntry = handleTable7.get(handle);
-  if (!handleEntry) {
-    throw new Error(`Resource error: Invalid handle ${handle}`);
-  }
-  handleTable7.delete(handle);
-  if (handleEntry.own && handleEntry.rep[symbolDispose]) {
-    handleEntry.rep[symbolDispose]();
+  const handleEntry = rscTableRemove(handleTable7, handle);
+  if (!handleEntry.own) throw new Error('Internal error: Unexpected borrow handle');
+  const rsc = captureTable1.get(handleEntry.rep);
+  if (rsc) {
+    if (rsc[symbolDispose]) rsc[symbolDispose]();
+    captureTable1.delete(handleEntry.rep);
+  } else if (OutputStream[symbolCabiDispose]) {
+    OutputStream[symbolCabiDispose](handleEntry.rep);
   }
 }
+const handleTable4 = [T_FLAG, 0];
+const captureTable3= new Map();
+let captureCnt3 = 0;
+handleTables[4] = handleTable4;
 function trampoline3(handle) {
-  const handleEntry = handleTable4.get(handle);
-  if (!handleEntry) {
-    throw new Error(`Resource error: Invalid handle ${handle}`);
-  }
-  handleTable4.delete(handle);
-  if (handleEntry.own && handleEntry.rep[symbolDispose]) {
-    handleEntry.rep[symbolDispose]();
+  const handleEntry = rscTableRemove(handleTable4, handle);
+  if (!handleEntry.own) throw new Error('Internal error: Unexpected borrow handle');
+  const rsc = captureTable3.get(handleEntry.rep);
+  if (rsc) {
+    if (rsc[symbolDispose]) rsc[symbolDispose]();
+    captureTable3.delete(handleEntry.rep);
+  } else if (Descriptor[symbolCabiDispose]) {
+    Descriptor[symbolCabiDispose](handleEntry.rep);
   }
 }
+const handleTable9 = [T_FLAG, 0];
+handleTables[9] = handleTable9;
 function trampoline19(handle) {
-  const handleEntry = handleTable9.get(handle);
-  if (!handleEntry) {
-    throw new Error(`Resource error: Invalid handle ${handle}`);
-  }
-  handleTable9.delete(handle);
-  if (handleEntry.own && handleEntry.rep[symbolDispose]) {
-    handleEntry.rep[symbolDispose]();
+  const handleEntry = rscTableRemove(handleTable9, handle);
+  if (!handleEntry.own) throw new Error('Internal error: Unexpected borrow handle');
+  const rsc = captureTable0.get(handleEntry.rep);
+  if (rsc) {
+    if (rsc[symbolDispose]) rsc[symbolDispose]();
+    captureTable0.delete(handleEntry.rep);
+  } else if (Error$1[symbolCabiDispose]) {
+    Error$1[symbolCabiDispose](handleEntry.rep);
   }
 }
+const handleTable10 = [T_FLAG, 0];
+handleTables[10] = handleTable10;
 function trampoline20(handle) {
-  const handleEntry = handleTable10.get(handle);
-  if (!handleEntry) {
-    throw new Error(`Resource error: Invalid handle ${handle}`);
-  }
-  handleTable10.delete(handle);
-  if (handleEntry.own && handleEntry.rep[symbolDispose]) {
-    handleEntry.rep[symbolDispose]();
+  const handleEntry = rscTableRemove(handleTable10, handle);
+  if (!handleEntry.own) throw new Error('Internal error: Unexpected borrow handle');
+  const rsc = captureTable2.get(handleEntry.rep);
+  if (rsc) {
+    if (rsc[symbolDispose]) rsc[symbolDispose]();
+    captureTable2.delete(handleEntry.rep);
+  } else if (InputStream[symbolCabiDispose]) {
+    InputStream[symbolCabiDispose](handleEntry.rep);
   }
 }
+const handleTable11 = [T_FLAG, 0];
+handleTables[11] = handleTable11;
 function trampoline21(handle) {
-  const handleEntry = handleTable11.get(handle);
-  if (!handleEntry) {
-    throw new Error(`Resource error: Invalid handle ${handle}`);
-  }
-  handleTable11.delete(handle);
-  if (handleEntry.own && handleEntry.rep[symbolDispose]) {
-    handleEntry.rep[symbolDispose]();
+  const handleEntry = rscTableRemove(handleTable11, handle);
+  if (!handleEntry.own) throw new Error('Internal error: Unexpected borrow handle');
+  const rsc = captureTable1.get(handleEntry.rep);
+  if (rsc) {
+    if (rsc[symbolDispose]) rsc[symbolDispose]();
+    captureTable1.delete(handleEntry.rep);
+  } else if (OutputStream[symbolCabiDispose]) {
+    OutputStream[symbolCabiDispose](handleEntry.rep);
   }
 }
+const handleTable8 = [T_FLAG, 0];
+handleTables[8] = handleTable8;
 function trampoline22(handle) {
-  const handleEntry = handleTable8.get(handle);
-  if (!handleEntry) {
-    throw new Error(`Resource error: Invalid handle ${handle}`);
-  }
-  handleTable8.delete(handle);
-  if (handleEntry.own && handleEntry.rep[symbolDispose]) {
-    handleEntry.rep[symbolDispose]();
+  const handleEntry = rscTableRemove(handleTable8, handle);
+  if (!handleEntry.own) throw new Error('Internal error: Unexpected borrow handle');
+  const rsc = captureTable3.get(handleEntry.rep);
+  if (rsc) {
+    if (rsc[symbolDispose]) rsc[symbolDispose]();
+    captureTable3.delete(handleEntry.rep);
+  } else if (Descriptor[symbolCabiDispose]) {
+    Descriptor[symbolCabiDispose](handleEntry.rep);
   }
 }
 function trampoline38(from_ptr, len, to_ptr) {
@@ -2955,14 +3246,14 @@ function kdfCk(arg0) {
   postReturn3(ret);
   return [result1, result2];
 }
-const handleTable0= new Map();
-let handleCnt0 = 0;
-const handleTable1= new Map();
-let handleCnt1 = 0;
-const handleTable2= new Map();
-let handleCnt2 = 0;
-const handleTable3= new Map();
-let handleCnt3 = 0;
+const handleTable0 = [T_FLAG, 0];
+handleTables[0] = handleTable0;
+const handleTable1 = [T_FLAG, 0];
+handleTables[1] = handleTable1;
+const handleTable2 = [T_FLAG, 0];
+handleTables[2] = handleTable2;
+const handleTable3 = [T_FLAG, 0];
+handleTables[3] = handleTable3;
 
 const $init = (async() => {
   const module0 = fetchCompile(new URL('./composed.core.wasm', import.meta.url));
