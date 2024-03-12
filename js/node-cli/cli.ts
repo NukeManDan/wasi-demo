@@ -1,6 +1,5 @@
 // See the README for details on *generation* of the required import
-// import { base64 } from "../target/js/composed.js";
-import { base64 } from "./composed.js";
+import {base64, ckcompactDrKdf} from '../wasm/composed.js';
 
 let utf8Encode = new TextEncoder();
 let bytes = utf8Encode.encode("Wazzzzup from");

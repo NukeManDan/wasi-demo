@@ -71,22 +71,18 @@ test: build
 
 # Transpile for web
 js: build
-    # Generate wasm base to further compose
-    # wasm-tools component wit wit/responder.wit -w > target/wasm32-wasi/release/responder.wasm
     # Compose JS target wasm
     wasm-tools compose target/wasm32-wasi/release/responder.wasm -d target/wasm32-wasi/release/base64.wasm -d target/wasm32-wasi/release/ckcompat-dr-kdf.wasm -o target/wasm32-wasi/release/composed.wasm
     # # FIXME: remove need to chmod artifacts 🤦
     # chmod +x target/wasm32-wasi/release/composed.wasm
 
-    # FIXME: remove need to build for every demo (somehow packages import f'ed) 🤦
-    jco transpile target/wasm32-wasi/release/composed.wasm -o js/node-cli
-
+    jco transpile target/wasm32-wasi/release/composed.wasm -o js/wasm
+    
     # Run CLI example
     tsc  js/node-cli/cli.ts -m es6
     node js/node-cli/cli.js
 
-    ###################### 
-    # FIXME: remove need to build for every demo (somehow packages import f'ed) 🤦
-    jco transpile target/wasm32-wasi/release/composed.wasm -o js/vite/src
+    ######################
+    # Vite demo 
     # Serve required files (index.html & jco genereated files minimally)
     npm run open --prefix js/vite

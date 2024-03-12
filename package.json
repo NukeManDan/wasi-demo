@@ -1,4 +1,5 @@
 {
+  "type": "module",
   "name": "responder-demo",
   "workspaces": ["js/node-cli", "js/vite"]
 }
