@@ -48,8 +48,36 @@ clean:
     rm -frv js/**/interfaces
     rm -rfv js/**/composed* -v
 
-# Install/update required tools (node, jco, dprint, cargo-component, wasm-tools, wasmtime...)
+# Install required tools (node, jco, dprint, cargo-component, wasm-tools, wasmtime...)
 install:
+    #!/usr/bin/env bash
+    set -euxo pipefail
+    if ! $(echo "type node" | sh > /dev/null ); then
+    	echo -e "\n Manually install node, suggested: https://github.com/nvm-sh/nvm?tab=readme-ov-file#installing-and-updating\n" & exit 1
+    fi
+    if ! $(echo "type jco" | sh > /dev/null ); then
+        npm install -g @bytecodealliance/jco
+    fi
+    if ! $(echo "type tsc" | sh > /dev/null ); then
+        npm install -g typescript typescript-language-server
+    fi
+    if ! $(echo "type dprint" | sh > /dev/null ); then
+    cargo install dprint
+    fi
+    if ! $(echo "type cargo-component" | sh > /dev/null ); then
+        cargo install cargo-component
+    fi
+    if ! $(echo "type wasm-tools" | sh > /dev/null ); then
+        cargo install wasm-tools
+    fi
+    if ! $(echo "type wasmtime" | sh > /dev/null ); then
+        curl https://wasmtime.dev/install.sh -sSf | bash
+    fi
+    # install deps for web
+    npm i
+
+# Force updates and manual rebuilds of all installs (you likely want `just install`).
+update:
     #!/usr/bin/env bash
     set -euxo pipefail
     if ! $(echo "type node" | sh > /dev/null ); then
@@ -57,10 +85,9 @@ install:
     fi
     npm install -g @bytecodealliance/jco
     npm install -g typescript typescript-language-server
-    cargo install dprint
-    # cargo install cargo-multi
-    cargo install cargo-component
-    cargo install wasm-tools
+    cargo install --force dprint
+    cargo install --force cargo-component
+    cargo install --force wasm-tools
     curl https://wasmtime.dev/install.sh -sSf | bash
     # install deps for web
     npm i
@@ -77,7 +104,7 @@ js: build
     # chmod +x target/wasm32-wasi/release/composed.wasm
 
     jco transpile target/wasm32-wasi/release/composed.wasm -o js/wasm
-    
+
     # Run CLI example
     tsc  js/node-cli/cli.ts -m es6
     node js/node-cli/cli.js
